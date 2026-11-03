@@ -7,6 +7,9 @@
 <link rel="apple-touch-icon" href="/icon-180.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#1E5A4C">
+<meta property="og:title" content="دواوين الوفرة">
+<meta property="og:description" content="دليل دواوين مدينة الوفرة السكنية والأفراح والتعازي">
+<meta property="og:image" content="https://wafra-diwaniyas.pages.dev/icon-512.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="دواوين الوفرة">
@@ -135,6 +138,7 @@ dl.facts dd{margin:0;overflow-wrap:anywhere}
 .review{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
 .review label{font-size:13px;color:var(--muted)}
 .review input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;width:100%;min-width:0}
+.card.focus{box-shadow:0 0 0 2px var(--accent)}
 .apology{display:flex;flex-direction:column;gap:2px;border-radius:10px;padding:8px 12px;background:var(--azaa-soft);color:var(--ink);font-size:14px}
 .apology b{color:var(--danger);font-weight:600}
 .apology span{color:var(--muted);font-size:13px}
@@ -414,12 +418,23 @@ function parseDays(t){t=normAr(t);if(/يومي|كل الايام|طوال الا
 async function loadCsv(url){if(!/^https:\/\//.test(url))throw new Error("config");const r=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now());if(!r.ok)throw new Error("http");const rows=csv(await r.text());return rows.slice(1).map((r,k)=>(r._row=k+2,r)).filter(r=>r.some(Boolean))}
 
 /* ---------- announcement ---------- */
+/* stable short key per event, shared with functions/e/[id].js */
+function evKey(start,person){const t=String(start||"")+"|"+String(person||"").trim();let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h.toString(36)}
+const SITE="https://wafra-diwaniyas.pages.dev";
+const evLink=ev=>SITE+"/e/"+evKey(ev.startDate,ev.person);
+function driveId(u){const m=String(u||"").match(/(?:\/file\/d\/|[?&]id=)([\w-]{20,})/);return m?m[1]:null}
+async function shareEvent(ev,btn){const text=announce(ev);const id=driveId(ev.photo);
+  if(id&&navigator.canShare){try{const r=await fetch("/img?id="+id);if(r.ok){const blob=await r.blob();const file=new File([blob],"دعوة.jpg",{type:blob.type||"image/jpeg"});
+      if(navigator.canShare({files:[file]})){await navigator.share({files:[file],text});return}}}catch(e){if(e&&e.name==="AbortError")return}}
+  if(navigator.share&&!id){try{await navigator.share({text});return}catch(e){if(e&&e.name==="AbortError")return}}
+  location.href="https://wa.me/?text="+encodeURIComponent(text)}
 function announce(ev){const L=[];const range=ev.endDate&&ev.endDate!==ev.startDate?("من "+fmtLong.format(parse(ev.startDate))+" إلى "+fmtLong.format(parse(ev.endDate))):fmtLong.format(parse(ev.startDate));
   const who=ev.person+(ev.family&&!ev.person.includes(ev.family)?" "+ev.family:"");
   if(ev.kind==="condolence"){L.push("انتقل إلى رحمة الله تعالى: "+who);L.push("العزاء للرجال: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("العزاء للنساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   else{L.push("حفل زواج: "+who);L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · الرجال: "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   if(ev.contact)L.push("للتواصل: "+ev.contact);if(safeUrl(ev.mapUrl))L.push("الموقع: "+ev.mapUrl);if(ev.notes)L.push(ev.notes);
-  L.push(ev.kind==="condolence"?"إنا لله وإنا إليه راجعون":"بارك الله لهما وبارك عليهما وجمع بينهما في خير");return L.join("\n")}
+  L.push(ev.kind==="condolence"?"إنا لله وإنا إليه راجعون":"بارك الله لهما وبارك عليهما وجمع بينهما في خير");
+  L.push("","📲 التفاصيل في تطبيق دواوين الوفرة:",evLink(ev));return L.join("\n")}
 
 /* ---------- events ---------- */
 function eventCard(ev){const st=status(ev);const d=parse(ev.startDate);const isC=ev.kind==="condolence";
@@ -432,10 +447,10 @@ function eventCard(ev){const st=status(ev);const d=parse(ev.startDate);const isC
     st==="soon"?el("span",{class:"chip soft",text:"قادم"}):null,st==="past"?el("span",{class:"chip soft",text:"انتهى"}):null,
     ev.family?el("span",{class:"chip soft",text:"عائلة "+ev.family}):null);
   const actions=el("div",{class:"actions"},el("button",{class:"btn sm",onclick:e=>copy(announce(ev),e.currentTarget)},"نسخ الإعلان"),
-    el("a",{class:"btn sm",href:"https://wa.me/?text="+encodeURIComponent(announce(ev)),target:"_blank",rel:"noopener"},"واتساب"),
+    el("button",{class:"btn sm",type:"button",onclick:e=>shareEvent(ev,e.currentTarget)},"مشاركة واتساب"),
     safeUrl(ev.mapUrl)?el("a",{class:"btn sm",href:ev.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
     admin.pin&&ev._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("events",ev)},"تعديل"):null);
-  return el("article",{class:"card "+(isC?"k-condolence":"k-wedding")+(st==="past"?" past":"")},
+  return el("article",{class:"card "+(isC?"k-condolence":"k-wedding")+(st==="past"?" past":""),id:"ev-"+evKey(ev.startDate,ev.person)},
     photoEl(ev.photo,ev.person),
     el("div",{class:"datebox"},el("b",{text:String(d.getDate())}),el("span",{text:fmtMonth.format(d)})),
     el("div",{class:"body"},chips,el("h3",{text:(isC?"عزاء المرحوم/ة ":"زواج ")+ev.person}),isC?el("div",{class:"verse",text:"إنا لله وإنا إليه راجعون"}):null,
@@ -627,7 +642,8 @@ $("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFie
 /* ---------- tabs ---------- */
 function showTab(t){state.tab=t;$("#tab-events").setAttribute("aria-selected",String(t==="events"));$("#tab-diwaniyas").setAttribute("aria-selected",String(t==="diwaniyas"));$("#view-events").hidden=t!=="events";$("#view-diwaniyas").hidden=t!=="diwaniyas"}
 $("#tab-events").addEventListener("click",()=>{location.hash="events"});$("#tab-diwaniyas").addEventListener("click",()=>{location.hash="diwaniyas"});
-const fromHash=()=>showTab(location.hash==="#diwaniyas"?"diwaniyas":"events");window.addEventListener("hashchange",fromHash);fromHash();
+const fromHash=()=>{showTab(location.hash==="#diwaniyas"?"diwaniyas":"events");focusEv()};
+function focusEv(){const h=location.hash;if(!/^#ev-/.test(h))return;const c=document.getElementById(h.slice(1));if(c){c.scrollIntoView({block:"center"});c.classList.add("focus")}}window.addEventListener("hashchange",fromHash);fromHash();
 document.querySelectorAll("#view-events .seg button").forEach(b=>b.addEventListener("click",()=>{state.filter=b.dataset.f;document.querySelectorAll("#view-events .seg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));renderEvents()}));
 $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("change",renderDiw);
 
@@ -639,7 +655,7 @@ applyAdmin();renderEvents();renderDiw();
 loadCsv(CONFIG.diwaniyasCsv).then(rows=>{state.diw=rows.map(rowToDiw).filter(d=>d.name)})
   .catch(()=>setNote("تعذّر تحميل الدواوين حالياً، حاول لاحقاً.")).finally(()=>{state.loaded.d=true;renderDiw()});
 loadCsv(CONFIG.eventsCsv).then(rows=>{state.events=rows.map(rowToEvent).filter(e=>e.person&&e.startDate)})
-  .catch(()=>setNote("تعذّر تحميل المناسبات حالياً، حاول لاحقاً.")).finally(()=>{state.loaded.e=true;renderEvents()});
+  .catch(()=>setNote("تعذّر تحميل المناسبات حالياً، حاول لاحقاً.")).finally(()=>{state.loaded.e=true;renderEvents();focusEv()});
 setInterval(renderEvents,60000);
 })();
 </script>
