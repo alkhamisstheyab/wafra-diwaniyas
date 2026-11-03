@@ -139,6 +139,9 @@ dl.facts dd{margin:0;overflow-wrap:anywhere}
 .review label{font-size:13px;color:var(--muted)}
 .review input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;width:100%;min-width:0}
 .card.focus{box-shadow:0 0 0 2px var(--accent)}
+.dhead{display:flex;align-items:center;gap:12px;min-width:0}
+.dhead h3{min-width:0;overflow-wrap:anywhere}
+.dlogo{width:52px;height:52px;flex:none;border-radius:50%;object-fit:cover;background:var(--sunk);border:1px solid var(--line);cursor:zoom-in}
 .apology{display:flex;flex-direction:column;gap:2px;border-radius:10px;padding:8px 12px;background:var(--azaa-soft);color:var(--ink);font-size:14px}
 .apology b{color:var(--danger);font-weight:600}
 .apology span{color:var(--muted);font-size:13px}
@@ -295,6 +298,7 @@ form{display:flex;flex-direction:column;gap:12px}
       </div>
       <div class="field"><label for="d-notes">ملاحظات</label><textarea id="d-notes" placeholder="مثال: مفتوح يومياً في رمضان بعد التراويح"></textarea></div>
       <div class="field admin-only" hidden><label for="d-file">صورة (اختياري)</label><input id="d-file" type="file" accept="image/*"><input id="d-photo" type="url" dir="ltr" placeholder="أو الصق رابط صورة https://..."></div>
+      <div class="field admin-only" hidden><label for="d-logofile">شعار الديوان (اختياري)</label><input id="d-logofile" type="file" accept="image/*"></div>
       <div class="formactions">
         <button class="btn primary" type="submit" id="d-save">متابعة للإرسال</button>
         <button class="btn" type="button" data-close>إلغاء</button>
@@ -336,6 +340,7 @@ form{display:flex;flex-direction:column;gap:12px}
       <p style="margin:0 0 10px;color:var(--muted)" id="reviewNote"></p>
       <div class="review" id="reviewFields"></div>
       <div class="field" style="margin-top:10px"><label for="rv-file">صورة من الجوال (اختياري)</label><input id="rv-file" type="file" accept="image/*"></div>
+      <div class="field" id="rv-logoRow" hidden><label for="rv-logo">شعار الديوان من الجوال (اختياري)</label><input id="rv-logo" type="file" accept="image/*"></div>
       <div class="formactions" style="margin-top:14px"><button class="btn primary" type="button" id="reviewSave">حفظ مباشرة</button><button class="btn" type="button" data-close>إلغاء</button><span class="grow"></span><button class="btn ghost danger" type="button" id="reviewDel" hidden>حذف</button></div>
       <div class="confirm" id="delConfirm" hidden style="margin-top:10px">حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="delYes">نعم، احذف</button><button class="btn sm" type="button" id="delNo">تراجع</button></div>
     </div>
@@ -399,6 +404,8 @@ function imgUrl(u){u=(u||"").trim();if(!/^https:\/\//i.test(u))return null;
   if(m&&/google\.com/.test(u))return"https://drive.google.com/thumbnail?id="+m[1]+"&sz=w1200";return u}
 function photoEl(u,alt){const src=imgUrl(u);if(!src)return null;const im=el("img",{class:"photo",src,alt,loading:"lazy",referrerpolicy:"no-referrer",role:"button",tabindex:"0","aria-label":"تكبير الصورة"});
   im.addEventListener("error",()=>im.remove());const open=()=>openPhoto(u,alt);im.addEventListener("click",open);im.addEventListener("keydown",e=>{if(e.key==="Enter")open()});return im}
+function logoEl(d){const src=imgUrl(d.logo);if(!src)return null;const im=el("img",{class:"dlogo",src,alt:"شعار "+d.name,loading:"lazy",referrerpolicy:"no-referrer"});
+  im.addEventListener("error",()=>im.remove());im.addEventListener("click",()=>openPhoto(d.logo,d.name));return im}
 function openPhoto(u,alt){const big=(imgUrl(u)||"").replace(/sz=w\d+/,"sz=w2400");const box=$("#lightbox");$("#lbImg").src=big;$("#lbImg").alt=alt||"";
   const orig=/drive\.google\.com/.test(u)?u:big;$("#lbOpen").href=orig;box.hidden=false}
 function closePhoto(){$("#lightbox").hidden=true;$("#lbImg").src=""}
@@ -485,7 +492,7 @@ function diwCard(d){const today=new Date().getDay();
       d.offDates.length>1?el("span",{text:"وأيضاً: "+d.offDates.slice(1,4).map(x=>fmtLong.format(parse(x))).join("، ")}):null,
       d.reason?el("span",{text:d.reason}):null)}
   const addr=[d.block?"قطعة "+d.block:"",d.street].filter(Boolean).join(" · ");
-  return el("article",{class:"dcard"+(offToday(d)?" closed":"")},photoEl(d.photo,d.name),el("h3",{text:d.name}),
+  return el("article",{class:"dcard"+(offToday(d)?" closed":"")},photoEl(d.photo,d.name),el("div",{class:"dhead"},logoEl(d),el("h3",{text:d.name})),
     d.owner||addr?el("div",{class:"hijri",text:[d.owner,addr].filter(Boolean).join(" — ")}):null,ap,days,
     d.hours?el("div",{text:"الاستقبال: "+d.hours}):null,d.notes?el("div",{class:"hijri",text:d.notes}):null,
     el("div",{class:"actions"},d.phone?el("button",{class:"btn sm",onclick:e=>copy(d.phone,e.currentTarget)},el("span",{class:"mono",text:d.phone})," · نسخ"):null,
@@ -572,7 +579,7 @@ $("#eventForm").addEventListener("submit",async e=>{e.preventDefault();backTo="e
 $("#diwForm").addEventListener("submit",async e=>{e.preventDefault();backTo="d";const g=f=>$("#d-"+f).value.trim();
   const days=[...document.querySelectorAll("#d-days input:checked")].map(x=>DAYS[Number(x.value)]);
   const row=[g("name"),g("owner"),g("block"),g("street"),days.length===7?"يومياً":days.join("، "),fmtSlots(readSlots($("#d-slots"))),g("phone"),g("map"),g("notes")];
-  if(admin.pin){const b=$("#d-save");b.disabled=true;try{row.push("","",await photoFrom($("#d-file"),g("photo")));await saveRow("diwaniyas",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
+  if(admin.pin){const b=$("#d-save");b.disabled=true;try{row.push("","",await photoFrom($("#d-file"),g("photo")),await photoFrom($("#d-logofile"),""));await saveRow("diwaniyas",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
   showSend(linesFor(DIW_TITLE,DIW_COLS,row))});
 $("#sendCopy").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(lastSend);toast("تم النسخ")}catch(e){const r=document.createRange();r.selectNodeContents($("#sendText"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("النص محدد، انسخه يدوياً")}});
 $("#sendBack").addEventListener("click",()=>openSheet(backTo==="e"?"أرسل مناسبة":backTo==="a"?"اعتذار عن الاستقبال":"أرسل ديوانك",backTo));
@@ -611,12 +618,12 @@ $("#pasteGo").addEventListener("click",()=>{const t=$("#paste-in").value;const k
   else{add("اسم الديوان",kv["اسم الديوان"],0);
     if(kind==="apology"){const v=kv["اعتذار"]||"";const dt=(toLatin(v).match(/\d{4}-\d{2}-\d{2}/)||[""])[0];add("اعتذار",/متوقف/.test(v)?"متوقف":dt,1);add("سبب الاعتذار",kv["سبب الاعتذار"],2);note="طلب اعتذار. اكتب التاريخ بصيغة 2026-11-06 أو كلمة متوقف."}
     else note="طلب إلغاء اعتذار: سيُمسح الاعتذار ويعود الديوان طبيعياً."}
-  pending=kind;$("#reviewDel").hidden=true;$("#delConfirm").hidden=true;$("#rv-file").value="";$("#rv-file").closest(".field").hidden=!(kind==="events"||kind==="diwaniyas");$("#reviewNote").textContent=note;openSheet("مراجعة الطلب","r")});
+  pending=kind;$("#reviewDel").hidden=true;$("#delConfirm").hidden=true;$("#rv-file").value="";$("#rv-logo").value="";$("#rv-logoRow").hidden=kind!=="diwaniyas";$("#rv-file").closest(".field").hidden=!(kind==="events"||kind==="diwaniyas");$("#reviewNote").textContent=note;openSheet("مراجعة الطلب","r")});
 let editing=null;
-const DIW_EDIT=DIW_COLS.concat(["اعتذار","سبب الاعتذار","رابط الصورة"]),EV_EDIT=EV_COLS.concat(["رابط الصورة"]);
+const DIW_EDIT=DIW_COLS.concat(["اعتذار","سبب الاعتذار","رابط الصورة","رابط الشعار"]),EV_EDIT=EV_COLS.concat(["رابط الصورة"]);
 function openEdit(sheet,rec){editing={sheet,rec};pending="edit";const cols=sheet==="events"?EV_EDIT:DIW_EDIT;const box=$("#reviewFields");box.replaceChildren();
   cols.forEach((c,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:c}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف|اعتذار$/.test(c)?"ltr":"auto"}),{value:(rec.raw&&rec.raw[i])||""}))});
-  $("#rv-file").value="";$("#rv-file").closest(".field").hidden=false;$("#reviewDel").hidden=false;$("#delConfirm").hidden=true;
+  $("#rv-file").value="";$("#rv-file").closest(".field").hidden=false;$("#rv-logo").value="";$("#rv-logoRow").hidden=sheet!=="diwaniyas";$("#reviewDel").hidden=false;$("#delConfirm").hidden=true;
   $("#reviewNote").textContent=sheet==="events"?"عدّل ما تريد ثم اضغط حفظ. التواريخ بصيغة 2026-11-06، والنوع «عزاء» أو «فرح».":"عدّل ما تريد ثم اضغط حفظ. الأيام مفصولة بفاصلة أو «يومياً»، والاعتذار تاريخ أو «متوقف».";
   openSheet(sheet==="events"?"تعديل المناسبة":"تعديل الديوان","r")}
 function keyOf(sheet,rec){return sheet==="events"?rec.raw[1]:rec.raw[0]}
@@ -628,13 +635,14 @@ $("#delYes").addEventListener("click",async()=>{if(!editing)return;const {sheet,
     [state.events,state.diw].forEach(L=>{if(L===list)L.forEach(x=>{if(x._row>rec._row)x._row--})});closeSheet();renderEvents();renderDiw();toast("تم الحذف")}
   catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
 $("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFields").querySelectorAll("input")].map(x=>x.value.trim());const b=$("#reviewSave");b.disabled=true;
-  try{if(pending==="edit"){const {sheet,rec}=editing;const row=vals.slice();const pi=row.length-1;row[pi]=await photoFrom($("#rv-file"),row[pi]);
+  try{if(pending==="edit"){const {sheet,rec}=editing;const row=vals.slice();const cols=sheet==="events"?EV_EDIT:DIW_EDIT;const pi=cols.indexOf("رابط الصورة");row[pi]=await photoFrom($("#rv-file"),row[pi]);
+      const li=cols.indexOf("رابط الشعار");if(li>=0)row[li]=await photoFrom($("#rv-logo"),row[li]);
       if(sheet==="events"){row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4]}
       await api({action:"update",sheet,rowNum:rec._row,expect:keyOf(sheet,rec),row});const rr=row.slice();rr._row=rec._row;
       const list=sheet==="events"?state.events:state.diw;const k=list.indexOf(rec);const nr=sheet==="events"?rowToEvent(rr):rowToDiw(rr);if(k>=0)list[k]=nr;
       closeSheet();renderEvents();renderDiw();toast("تم حفظ التعديل")}
     else if(pending==="events"){const row=vals.slice(0,13);row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4];row.push(await photoFrom($("#rv-file"),vals[13]));await saveRow("events",row)}
-    else if(pending==="diwaniyas"){const row=vals.slice(0,9);row.push("","",await photoFrom($("#rv-file"),vals[9]));await saveRow("diwaniyas",row)}
+    else if(pending==="diwaniyas"){const row=vals.slice(0,9);row.push("","",await photoFrom($("#rv-file"),vals[9]),await photoFrom($("#rv-logo"),""));await saveRow("diwaniyas",row)}
     else if(pending==="apology"){const v=vals[1];await saveApology(vals[0],/متوقف/.test(v)?"pause":"date",normDate(v),vals[2])}
     else await saveApology(vals[0],"cancel","","")}
   catch(err){if(err.code==="notfound")toast("لم أجد ديواناً بهذا الاسم في الجدول");else if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
@@ -648,7 +656,7 @@ document.querySelectorAll("#view-events .seg button").forEach(b=>b.addEventListe
 $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("change",renderDiw);
 
 /* ---------- load ---------- */
-function rowToDiw(r){return{name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),street:r[3]||"",days:parseDays(r[4]),hours:r[5]||"",phone:toLatin(r[6]),mapUrl:r[7]||"",notes:r[8]||"",...parseApology(r[9],r[10]),photo:r[11]||"",_row:r._row,raw:Array.from({length:12},(_,k)=>r[k]||"")}}
+function rowToDiw(r){return{name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),street:r[3]||"",days:parseDays(r[4]),hours:r[5]||"",phone:toLatin(r[6]),mapUrl:r[7]||"",notes:r[8]||"",...parseApology(r[9],r[10]),photo:r[11]||"",logo:r[12]||"",_row:r._row,raw:Array.from({length:13},(_,k)=>r[k]||"")}}
 function rowToEvent(r){const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
   return{kind:/عزا/.test(r[0]||"")?"condolence":"wedding",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||"",_row:r._row,raw:Array.from({length:14},(_,k)=>r[k]||"")}}
 applyAdmin();renderEvents();renderDiw();
