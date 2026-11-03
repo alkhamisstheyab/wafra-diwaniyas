@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#1E5A4C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="دواوين الوفرة">
+<meta name="description" content="دليل دواوين مدينة الوفرة السكنية والأفراح والتعازي">
+<title>دواوين الوفرة</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+img{max-width:100%}
+html{-webkit-text-size-adjust:100%}
+
+/* Layout: one narrow column like a community notice board; a sadu-weave band under the header; two tabs (occasions / diwaniyas). */
+:root{
+  --bg:#F2F4F1; --surface:#FFFFFF; --sunk:#E7EBE6; --line:#D3D9D2;
+  --ink:#18221D; --muted:#5B6760;
+  --accent:#1E5A4C; --accent-ink:#FFFFFF; --accent-soft:#DCEAE4;
+  --wed:#9A6B12; --wed-soft:#F5EBD3;
+  --azaa:#3F4542; --azaa-soft:#E4E6E4;
+  --sadu1:#7B1E1E; --sadu2:#1B1B1B; --sadu3:#E9E2D0;
+  --ok:#2F7A4A; --danger:#A3322A;
+  --f-display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111715; --surface:#19211E; --sunk:#202A26; --line:#2E3A35;
+  --ink:#E6ECE8; --muted:#97A49D;
+  --accent:#5FB39C; --accent-ink:#0D1714; --accent-soft:#1F3A33;
+  --wed:#E0B256; --wed-soft:#3A2F17;
+  --azaa:#C3C9C5; --azaa-soft:#2A302D;
+  --sadu1:#A33A33; --sadu2:#0A0A0A; --sadu3:#5A5345;
+  --ok:#6CC58E; --danger:#E7786E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111715; --surface:#19211E; --sunk:#202A26; --line:#2E3A35;
+  --ink:#E6ECE8; --muted:#97A49D;
+  --accent:#5FB39C; --accent-ink:#0D1714; --accent-soft:#1F3A33;
+  --wed:#E0B256; --wed-soft:#3A2F17;
+  --azaa:#C3C9C5; --azaa-soft:#2A302D;
+  --sadu1:#A33A33; --sadu2:#0A0A0A; --sadu3:#5A5345;
+  --ok:#6CC58E; --danger:#E7786E; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;direction:rtl}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{padding-block:20px 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand-row{display:flex;align-items:center;gap:12px}.logo{flex:none;background:#fff;border-radius:14px;padding:4px}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1.15;margin:0;text-wrap:balance}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.sadu{height:12px;background:
+  linear-gradient(135deg,var(--sadu1) 25%,transparent 25%) 0 0/12px 12px,
+  linear-gradient(225deg,var(--sadu1) 25%,transparent 25%) 0 0/12px 12px,
+  linear-gradient(315deg,var(--sadu2) 25%,transparent 25%) 0 0/12px 12px,
+  linear-gradient(45deg,var(--sadu2) 25%,transparent 25%) 0 0/12px 12px,
+  var(--sadu3)}
+
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.tabs .wrap{display:flex;gap:4px;padding-block:8px}
+.tab{flex:1;border:0;background:transparent;padding:10px 8px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--line),0 0 0 1px var(--line)}
+.tab .n{font-size:12px;background:var(--sunk);border-radius:999px;padding:0 8px;font-variant-numeric:tabular-nums}
+
+main .wrap{padding-block:16px 96px;display:flex;flex-direction:column;gap:16px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;background:var(--sunk);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.grow{flex:1}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 10px}
+.btn.danger{color:var(--danger)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.search{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px}
+.check{display:inline-flex;gap:6px;align-items:center;color:var(--muted);font-size:14px;cursor:pointer}
+
+.group h2{font-family:var(--f-display);font-weight:500;font-size:17px;margin:4px 0 10px;color:var(--muted);letter-spacing:.2px;display:flex;align-items:center;gap:8px}
+.group h2::after{content:"";flex:1;height:1px;background:var(--line)}
+.list{display:flex;flex-direction:column;gap:10px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;grid-template-columns:64px 1fr;gap:14px}
+.card.past{opacity:.72}
+.datebox{border-radius:10px;text-align:center;padding:8px 4px;align-self:start;font-variant-numeric:tabular-nums}
+.k-wedding .datebox{background:var(--wed-soft);color:var(--wed)}
+.k-condolence .datebox{background:var(--azaa-soft);color:var(--azaa)}
+.datebox b{display:block;font-family:var(--f-display);font-size:26px;line-height:1}
+.datebox span{font-size:12px}
+.body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{font-size:12px;font-weight:600;border-radius:999px;padding:1px 10px}
+.k-wedding .chip.kind{background:var(--wed-soft);color:var(--wed)}
+.k-condolence .chip.kind{background:var(--azaa-soft);color:var(--azaa)}
+.chip.now{background:var(--accent-soft);color:var(--accent)}
+.chip.soft{background:var(--sunk);color:var(--muted);font-weight:500}
+.card h3{margin:0;font-size:17px;font-weight:600;line-height:1.45;text-wrap:balance;overflow-wrap:anywhere}
+.verse{font-family:var(--f-display);font-size:13px;color:var(--muted)}
+dl.facts{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:14px}
+dl.facts dt{color:var(--muted)}
+dl.facts dd{margin:0;overflow-wrap:anywhere}
+.hijri{color:var(--muted);font-size:12.5px}
+.actions{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.mono{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
+.dcard h3{margin:0;font-family:var(--f-display);font-weight:500;font-size:19px}
+.days{display:flex;gap:4px;flex-wrap:wrap}
+.day{font-size:12px;border-radius:6px;padding:1px 7px;background:var(--sunk);color:var(--muted)}
+.day.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.day.today{box-shadow:0 0 0 1.5px var(--accent)}
+.apology{display:flex;flex-direction:column;gap:2px;border-radius:10px;padding:8px 12px;background:var(--azaa-soft);color:var(--ink);font-size:14px}
+.apology b{color:var(--danger);font-weight:600}
+.apology span{color:var(--muted);font-size:13px}
+.dcard.closed h3{color:var(--muted)}
+.day.off{text-decoration:line-through;opacity:.7}
+.open-now{color:var(--ok);font-weight:600;font-size:13px}
+
+.empty{border:1.5px dashed var(--line);border-radius:var(--r);padding:28px 18px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-family:var(--f-display);font-weight:500;font-size:18px;margin-bottom:4px}
+.note{font-size:13px;color:var(--muted);background:var(--sunk);border-radius:10px;padding:8px 12px}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(10,15,13,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:16px 16px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+@media (min-width:700px){.overlay{align-items:center}.sheet{border-radius:16px}}
+.sheet h2{font-family:var(--f-display);font-weight:500;font-size:22px;margin:0 0 12px}
+form{display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.field .lbl{font-size:13px;color:var(--muted);font-weight:500}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 12px;width:100%}
+.field textarea{min-height:70px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.daypick{display:flex;gap:6px;flex-wrap:wrap}
+.slots{display:flex;flex-direction:column;gap:6px}
+.slot{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:14px}
+.slot select{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:7px 10px;width:auto;min-width:0}
+.slot .sel-p{flex:1 1 150px}
+.addslot{align-self:flex-start}
+.preview{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;max-height:260px;overflow:auto;overflow-wrap:anywhere;margin:0}
+.daypick label{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:14px;color:var(--ink)}
+.daypick input{accent-color:var(--accent)}
+.formactions{display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap;margin-top:4px}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;background:var(--sunk);border-radius:10px;padding:8px 10px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand-row"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="56" height="56" aria-hidden="true" class="logo">
+  <defs>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2A7DE1"/><stop offset="1" stop-color="#1B4FB8"/></linearGradient>
+    <linearGradient id="o" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFA62B"/><stop offset="1" stop-color="#F57C14"/></linearGradient>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M40 74 C70 80 92 100 102 122 C110 142 98 158 90 176 L164 176 C156 158 144 142 152 122 C158 106 156 94 146 86" stroke="url(#b)" stroke-width="18"/>
+    <path d="M106 88 C112 62 140 62 146 88" stroke="url(#o)" stroke-width="16"/>
+    <path d="M156 100 C192 100 198 146 164 160" stroke="url(#o)" stroke-width="15"/>
+    <path d="M30 206 C80 192 150 192 214 210" stroke="url(#o)" stroke-width="12"/>
+    <path d="M38 164 L44 184 H64 L70 164" stroke="url(#b)" stroke-width="9"/>
+  </g>
+  <circle cx="126" cy="52" r="8" fill="url(#o)"/>
+</svg>
+<div class="brand">
+      <h1>دواوين الوفرة</h1>
+      <p>مدينة الوفرة السكنية · الأفراح والتعازي ومواعيد الدواوين</p>
+    </div></div>
+    <div class="hijri" id="todayLine"></div>
+  </div>
+  <div class="sadu" aria-hidden="true"></div>
+</header>
+
+<nav class="tabs" aria-label="الأقسام">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" id="tab-events" aria-selected="true">المناسبات <span class="n" id="nEvents">0</span></button>
+    <button class="tab" role="tab" id="tab-diwaniyas" aria-selected="false">الدواوين <span class="n" id="nDiw">0</span></button>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <div id="statusNote" class="note" hidden></div>
+
+    <section id="view-events">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="نوع المناسبة">
+          <button data-f="all" aria-pressed="true">الكل</button>
+          <button data-f="wedding" aria-pressed="false">أفراح</button>
+          <button data-f="condolence" aria-pressed="false">تعازي</button>
+        </div>
+        <span class="grow"></span>
+        <button class="btn primary" id="addEvent">أرسل مناسبة</button>
+      </div>
+      <div id="eventsOut" style="display:flex;flex-direction:column;gap:18px;margin-top:16px"></div>
+    </section>
+
+    <section id="view-diwaniyas" hidden>
+      <div class="toolbar">
+        <input class="search" id="q" type="search" placeholder="ابحث باسم الديوان أو العائلة أو القطعة">
+        <button class="btn primary" id="addDiw">أرسل ديوانك</button>
+      </div>
+      <div class="toolbar" style="margin-top:10px">
+        <label class="check"><input type="checkbox" id="openToday"> المفتوحة اليوم فقط</label>
+      </div>
+      <div id="diwOut" class="list" style="margin-top:14px"></div>
+    </section>
+  </div>
+</main>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h2 id="sheetTitle"></h2>
+
+    <form id="eventForm" hidden>
+      <div class="field"><span class="lbl">نوع المناسبة</span>
+        <div class="seg" role="group" id="kindSeg">
+          <button type="button" data-k="condolence" aria-pressed="true">عزاء</button>
+          <button type="button" data-k="wedding" aria-pressed="false">فرح / زواج</button>
+        </div>
+      </div>
+      <div class="field"><label for="e-person" id="e-person-l">اسم المتوفى</label><input id="e-person" required></div>
+      <div class="field"><label for="e-family">العائلة</label><input id="e-family" placeholder="مثال: الخميس"></div>
+      <div class="two">
+        <div class="field"><label for="e-start">من تاريخ</label><input id="e-start" type="date" required></div>
+        <div class="field"><label for="e-end">إلى تاريخ</label><input id="e-end" type="date"></div>
+      </div>
+      <div class="field"><label for="e-venue" id="e-venue-l">مكان العزاء للرجال</label><input id="e-venue" list="diwList" placeholder="اسم الديوان أو الصالة"></div>
+      <div class="field"><label for="e-area">العنوان (قطعة / شارع / منزل)</label><input id="e-area"></div>
+      <div class="field"><span class="lbl" id="e-mentime-l">وقت الرجال</span><div class="slots" id="e-menSlots"></div></div>
+      <div class="field"><label for="e-wvenue">مكان النساء</label><input id="e-wvenue"></div>
+      <div class="field"><span class="lbl">وقت النساء</span><div class="slots" id="e-womenSlots"></div></div>
+      <div class="two">
+        <div class="field"><label for="e-contact">هاتف للتواصل</label><input id="e-contact" type="tel" inputmode="tel" dir="ltr"></div>
+        <div class="field"><label for="e-map">رابط الموقع (خرائط)</label><input id="e-map" type="url" dir="ltr" placeholder="https://maps..."></div>
+      </div>
+      <div class="field"><label for="e-notes">ملاحظات</label><textarea id="e-notes"></textarea></div>
+      <div class="formactions">
+        <button class="btn primary" type="submit" id="e-save">متابعة للإرسال</button>
+        <button class="btn" type="button" data-close>إلغاء</button>
+      </div>
+    </form>
+
+    <form id="diwForm" hidden>
+      <div class="field"><label for="d-name">اسم الديوان</label><input id="d-name" required placeholder="مثال: ديوان الخميس"></div>
+      <div class="field"><label for="d-owner">صاحب الديوان / العائلة</label><input id="d-owner"></div>
+      <div class="two">
+        <div class="field"><label for="d-block">القطعة</label><input id="d-block" inputmode="numeric"></div>
+        <div class="field"><label for="d-street">الشارع / المنزل</label><input id="d-street"></div>
+      </div>
+      <div class="field"><span class="lbl">أيام الاستقبال</span><div class="daypick" id="d-days"></div></div>
+      <div class="field"><span class="lbl">وقت الاستقبال</span><div class="slots" id="d-slots"></div></div>
+      <div class="two">
+        <div class="field"><label for="d-phone">هاتف</label><input id="d-phone" type="tel" inputmode="tel" dir="ltr"></div>
+        <div class="field"><label for="d-map">رابط الموقع (خرائط)</label><input id="d-map" type="url" dir="ltr" placeholder="https://maps..."></div>
+      </div>
+      <div class="field"><label for="d-notes">ملاحظات</label><textarea id="d-notes" placeholder="مثال: مفتوح يومياً في رمضان بعد التراويح"></textarea></div>
+      <div class="formactions">
+        <button class="btn primary" type="submit" id="d-save">متابعة للإرسال</button>
+        <button class="btn" type="button" data-close>إلغاء</button>
+      </div>
+    </form>
+
+    <form id="apologyForm" hidden>
+      <p style="margin:0;color:var(--muted)">الديوان: <strong id="ap-name" style="color:var(--ink)"></strong></p>
+      <div class="field"><span class="lbl">نوع الاعتذار</span>
+        <div class="daypick">
+          <label><input type="radio" name="ap-mode" id="ap-m1" value="date" checked> يوم محدد</label>
+          <label><input type="radio" name="ap-mode" id="ap-m2" value="pause"> متوقف حتى إشعار آخر</label>
+          <label id="ap-cancelRow"><input type="radio" name="ap-mode" id="ap-m3" value="cancel"> عاد الاستقبال (إلغاء الاعتذار)</label>
+        </div>
+      </div>
+      <div class="field" id="ap-dateRow"><label for="ap-date">تاريخ الاعتذار</label><input id="ap-date" type="date"></div>
+      <div class="field" id="ap-reasonRow"><label for="ap-reason">السبب (اختياري)</label><input id="ap-reason" placeholder="مثال: سفر، ظرف عائلي"></div>
+      <div class="formactions">
+        <button class="btn primary" type="submit">متابعة للإرسال</button>
+        <button class="btn" type="button" data-close>إلغاء</button>
+      </div>
+    </form>
+
+    <div id="sendPanel" hidden>
+      <p style="margin:0 0 10px;color:var(--muted)">راجع الطلب ثم أرسله إلى صاحب التطبيق عبر واتساب، وسيُضاف بعد التأكد منه.</p>
+      <pre class="preview" id="sendText"></pre>
+      <div class="formactions" style="margin-top:12px">
+        <a class="btn primary" id="sendLink" target="_blank" rel="noopener">إرسال عبر واتساب</a>
+        <button class="btn" type="button" id="sendCopy">نسخ النص</button>
+        <button class="btn ghost" type="button" id="sendBack">رجوع للتعديل</button>
+      </div>
+      <p class="hijri" style="margin:10px 0 0">إذا لم يفتح واتساب، انسخ النص وأرسله إلى الرقم <span class="mono">+965 6000 8341</span></p>
+    </div>
+
+  </div>
+</div>
+<datalist id="diwList"></datalist>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+/* ====== الإعدادات: روابط النشر من Google Sheets ====== */
+const CONFIG={
+  diwaniyasCsv:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRWuKKehvUtt7zHVDSKvTqg3i39ohH98Eeis27ei0RWKYKmkA5ek7EVhnugMUo7qX7AaGrM8n0xqjnG/pub?gid=1818035409&single=true&output=csv",
+  eventsCsv:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRWuKKehvUtt7zHVDSKvTqg3i39ohH98Eeis27ei0RWKYKmkA5ek7EVhnugMUo7qX7AaGrM8n0xqjnG/pub?gid=300473328&single=true&output=csv",
+  ownerWhatsApp:"96560008341"
+};
+/* ===================================================== */
+const DAYS=["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+const $=s=>document.querySelector(s);
+const state={events:[],diw:[],filter:"all",tab:"events",loaded:{e:false,d:false},kind:"condolence"};
+const pad=n=>String(n).padStart(2,"0");
+const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d,12)};
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+let fmtLong,fmtMonth,fmtHijri;
+try{fmtLong=new Intl.DateTimeFormat("ar-KW-u-nu-latn",{weekday:"long",day:"numeric",month:"long"});}catch(e){fmtLong={format:d=>d.toDateString()}}
+try{fmtMonth=new Intl.DateTimeFormat("ar-KW-u-nu-latn",{month:"long"});}catch(e){fmtMonth={format:d=>d.getMonth()+1}}
+try{fmtHijri=new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn",{day:"numeric",month:"long",year:"numeric"});}catch(e){fmtHijri=null}
+const hijri=s=>fmtHijri?fmtHijri.format(parse(s)):"";
+function status(ev){const t=todayStr();const end=ev.endDate||ev.startDate;if(end<t)return"past";if(ev.startDate<=t)return"now";return"soon"}
+$("#todayLine").textContent=fmtLong.format(new Date())+(fmtHijri?" · "+fmtHijri.format(new Date()):"");
+
+const PERIODS=[["am","صباحاً"],["pm","عصراً"],["maghrib","بعد صلاة المغرب"],["isha","بعد صلاة العشاء"]];
+const PL=Object.fromEntries(PERIODS);const hasHour=p=>p==="am"||p==="pm";
+function fmtSlot(x){if(!x||!x.p)return"";let t=PL[x.p]||"";if(hasHour(x.p)&&x.from)t+=x.to?" من الساعة "+x.from+" إلى "+x.to:" الساعة "+x.from;return t}
+const fmtSlots=a=>(a||[]).map(fmtSlot).filter(Boolean).join(" و");
+
+function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const k in attrs){if(k==="class")e.className=attrs[k];else if(k==="text")e.textContent=attrs[k];else if(k.startsWith("on"))e.addEventListener(k.slice(2),attrs[k]);else e.setAttribute(k,attrs[k])}for(const c of kids){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(c))}return e}
+let toastT;function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
+async function copy(text,btn){try{await navigator.clipboard.writeText(text);toast("تم النسخ")}catch(e){const ta=el("textarea",{class:"search",readonly:""});ta.value=text;ta.style.minHeight="120px";btn.closest(".actions").after(ta);ta.select();toast("حدّد النص وانسخه يدوياً")}}
+const safeUrl=u=>/^https:\/\//i.test(u||"")?u:null;
+function setNote(msg){const n=$("#statusNote");n.textContent=msg||"";n.hidden=!msg}
+
+/* ---------- CSV ---------- */
+function csv(text){const rows=[];let row=[],f="",q=false;for(let i=0;i<text.length;i++){const c=text[i];
+  if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+  else if(c==='"')q=true;else if(c===","){row.push(f);f=""}else if(c==="\n"||c==="\r"){if(c==="\r"&&text[i+1]==="\n")i++;row.push(f);rows.push(row);row=[];f=""}else f+=c}
+  if(f!==""||row.length){row.push(f);rows.push(row)}return rows.map(r=>r.map(x=>x.trim()))}
+const toLatin=s=>String(s||"").replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+function normDate(s){s=toLatin(s).trim();let m=s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);if(m)return m[1]+"-"+pad(m[2])+"-"+pad(m[3]);
+  m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);if(m)return m[3]+"-"+pad(m[2])+"-"+pad(m[1]);return""}
+const normAr=s=>String(s||"").replace(/[إأآ]/g,"ا");
+function parseDays(t){t=normAr(t);if(/يومي|كل الايام|طوال الاسبوع/.test(t))return[0,1,2,3,4,5,6];return DAYS.map((d,i)=>t.includes(normAr(d).replace("ال",""))?i:-1).filter(i=>i>=0)}
+async function loadCsv(url){if(!/^https:\/\//.test(url))throw new Error("config");const r=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now());if(!r.ok)throw new Error("http");const rows=csv(await r.text());return rows.slice(1).filter(r=>r.some(Boolean))}
+
+/* ---------- announcement ---------- */
+function announce(ev){const L=[];const range=ev.endDate&&ev.endDate!==ev.startDate?("من "+fmtLong.format(parse(ev.startDate))+" إلى "+fmtLong.format(parse(ev.endDate))):fmtLong.format(parse(ev.startDate));
+  const who=ev.person+(ev.family&&!ev.person.includes(ev.family)?" "+ev.family:"");
+  if(ev.kind==="condolence"){L.push("انتقل إلى رحمة الله تعالى: "+who);L.push("العزاء للرجال: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("العزاء للنساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
+  else{L.push("حفل زواج: "+who);L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · الرجال: "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
+  if(ev.contact)L.push("للتواصل: "+ev.contact);if(safeUrl(ev.mapUrl))L.push("الموقع: "+ev.mapUrl);if(ev.notes)L.push(ev.notes);
+  L.push(ev.kind==="condolence"?"إنا لله وإنا إليه راجعون":"بارك الله لهما وبارك عليهما وجمع بينهما في خير");return L.join("\n")}
+
+/* ---------- events ---------- */
+function eventCard(ev){const st=status(ev);const d=parse(ev.startDate);const isC=ev.kind==="condolence";
+  const facts=el("dl",{class:"facts"});const add=(k,v,cls)=>{if(!v)return;facts.append(el("dt",{text:k}),el("dd",cls?{class:cls,text:v}:{text:v}))};
+  add("التاريخ",ev.endDate&&ev.endDate!==ev.startDate?fmtLong.format(d)+" ← "+fmtLong.format(parse(ev.endDate)):fmtLong.format(d));
+  add(isC?"الرجال":"المكان",[ev.venue,ev.area].filter(Boolean).join("، ")+(ev.menTime?" · "+ev.menTime:""));
+  add("النساء",[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "));add("التواصل",ev.contact,"mono");add("ملاحظات",ev.notes);
+  const chips=el("div",{class:"row"},el("span",{class:"chip kind",text:isC?"عزاء":"فرح"}),
+    st==="now"?el("span",{class:"chip now",text:ev.startDate===todayStr()&&ev.endDate===ev.startDate?"اليوم":"جارٍ الآن"}):null,
+    st==="soon"?el("span",{class:"chip soft",text:"قادم"}):null,st==="past"?el("span",{class:"chip soft",text:"انتهى"}):null,
+    ev.family?el("span",{class:"chip soft",text:"عائلة "+ev.family}):null);
+  const actions=el("div",{class:"actions"},el("button",{class:"btn sm",onclick:e=>copy(announce(ev),e.currentTarget)},"نسخ الإعلان"),
+    el("a",{class:"btn sm",href:"https://wa.me/?text="+encodeURIComponent(announce(ev)),target:"_blank",rel:"noopener"},"واتساب"),
+    safeUrl(ev.mapUrl)?el("a",{class:"btn sm",href:ev.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null);
+  return el("article",{class:"card "+(isC?"k-condolence":"k-wedding")+(st==="past"?" past":"")},
+    el("div",{class:"datebox"},el("b",{text:String(d.getDate())}),el("span",{text:fmtMonth.format(d)})),
+    el("div",{class:"body"},chips,el("h3",{text:(isC?"عزاء المرحوم/ة ":"زواج ")+ev.person}),isC?el("div",{class:"verse",text:"إنا لله وإنا إليه راجعون"}):null,
+      el("div",{class:"hijri",text:hijri(ev.startDate)}),facts,actions))}
+function renderEvents(){const out=$("#eventsOut");out.replaceChildren();const t=todayStr(),cut=addDays(t,-14);
+  const list=state.events.filter(e=>state.filter==="all"||e.kind===state.filter);
+  const now=list.filter(e=>status(e)==="now").sort((a,b)=>a.startDate.localeCompare(b.startDate));
+  const soon=list.filter(e=>status(e)==="soon").sort((a,b)=>a.startDate.localeCompare(b.startDate));
+  const past=list.filter(e=>status(e)==="past"&&e.endDate>=cut).sort((a,b)=>b.startDate.localeCompare(a.startDate));
+  $("#nEvents").textContent=state.events.filter(e=>status(e)!=="past").length;
+  if(!state.loaded.e){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل المناسبات…"})));return}
+  if(!now.length&&!soon.length&&!past.length){out.append(el("div",{class:"empty"},el("strong",{text:state.filter==="wedding"?"لا توجد أفراح مسجّلة":state.filter==="condolence"?"لا توجد تعازي مسجّلة":"لا توجد مناسبات حالياً"}),"لإضافة عزاء أو فرح، اضغط «أرسل مناسبة» وسيُضاف بعد المراجعة."));return}
+  const group=(title,arr)=>{if(!arr.length)return;out.append(el("div",{class:"group"},el("h2",{text:title}),el("div",{class:"list"},...arr.map(eventCard))))};
+  group("اليوم والجارية",now);group("القادمة",soon);group("انتهت خلال الأسبوعين الماضيين",past)}
+
+/* ---------- diwaniyas ---------- */
+function parseApology(raw,reason){raw=toLatin(raw||"").trim();const out={paused:false,offDates:[],reason:(reason||"").trim()};
+  if(!raw)return out;if(/متوقف|مغلق|حتى اشعار|حتى إشعار/.test(raw))out.paused=true;
+  out.offDates=raw.split(/[،,;\s]+/).map(normDate).filter(Boolean).filter(x=>x>=todayStr()).sort();return out}
+const offToday=d=>d.paused||d.offDates.includes(todayStr());
+function weekOff(d){/* weekday indexes cancelled within the next 7 days */const t=todayStr(),lim=addDays(t,6);return d.offDates.filter(x=>x<=lim).map(x=>parse(x).getDay())}
+function diwCard(d){const today=new Date().getDay();
+  const off=weekOff(d);
+  const days=el("div",{class:"days"},...DAYS.map((n,i)=>el("span",{class:"day"+(d.days.includes(i)?" on":"")+(i===today?" today":"")+(d.paused||off.includes(i)?" off":""),text:n})));
+  let ap=null;
+  if(d.paused)ap=el("div",{class:"apology"},el("b",{text:"الديوان معتذر مؤقتاً عن الاستقبال"}),d.reason?el("span",{text:d.reason}):null,el("span",{text:"سيعود الاستقبال عند إعلان صاحب الديوان"}));
+  else if(d.offDates.length){const first=d.offDates[0];
+    ap=el("div",{class:"apology"},el("b",{text:first===todayStr()?"معتذر اليوم عن الاستقبال":"اعتذار يوم "+fmtLong.format(parse(first))}),
+      d.offDates.length>1?el("span",{text:"وأيضاً: "+d.offDates.slice(1,4).map(x=>fmtLong.format(parse(x))).join("، ")}):null,
+      d.reason?el("span",{text:d.reason}):null)}
+  const addr=[d.block?"قطعة "+d.block:"",d.street].filter(Boolean).join(" · ");
+  return el("article",{class:"dcard"+(offToday(d)?" closed":"")},el("h3",{text:d.name}),
+    d.owner||addr?el("div",{class:"hijri",text:[d.owner,addr].filter(Boolean).join(" — ")}):null,ap,days,
+    d.hours?el("div",{text:"الاستقبال: "+d.hours}):null,d.notes?el("div",{class:"hijri",text:d.notes}):null,
+    el("div",{class:"actions"},d.phone?el("button",{class:"btn sm",onclick:e=>copy(d.phone,e.currentTarget)},el("span",{class:"mono",text:d.phone})," · نسخ"):null,
+      safeUrl(d.mapUrl)?el("a",{class:"btn sm",href:d.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
+      el("button",{class:"btn sm ghost",onclick:()=>openApology(d)},d.paused||d.offDates.length?"تعديل الاعتذار":"اعتذار عن الاستقبال")))}
+function renderDiw(){const out=$("#diwOut");out.replaceChildren();$("#nDiw").textContent=state.diw.length;
+  $("#diwList").replaceChildren(...state.diw.map(d=>el("option",{value:d.name})));
+  if(!state.loaded.d){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل الدواوين…"})));return}
+  const q=$("#q").value.trim();const onlyToday=$("#openToday").checked;const today=new Date().getDay();
+  const list=state.diw.filter(d=>(!q||[d.name,d.owner,d.block,d.street].join(" ").includes(q))&&(!onlyToday||(d.days.includes(today)&&!offToday(d)))).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+  if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:state.diw.length?"لا نتائج مطابقة":"لا توجد دواوين مسجّلة بعد"}),state.diw.length?"جرّب كلمة بحث أخرى أو ألغِ فلتر «المفتوحة اليوم».":"اضغط «أرسل ديوانك» لتسجيل ديوانك وأيام استقباله."));return}
+  out.append(...list.map(diwCard))}
+
+/* ---------- forms ---------- */
+const overlay=$("#overlay");
+function openSheet(title,form){$("#sheetTitle").textContent=title;$("#eventForm").hidden=form!=="e";$("#diwForm").hidden=form!=="d";$("#sendPanel").hidden=form!=="s";$("#apologyForm").hidden=form!=="a";overlay.hidden=false;if(form==="e")setTimeout(()=>$("#e-person").focus(),50);if(form==="d")setTimeout(()=>$("#d-name").focus(),50)}
+function closeSheet(){overlay.hidden=true}
+overlay.addEventListener("click",e=>{if(e.target===overlay||e.target.hasAttribute("data-close"))closeSheet()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.hidden)closeSheet()});
+function setKind(k){state.kind=k;document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.k===k)));
+  const c=k==="condolence";$("#e-person-l").textContent=c?"اسم المتوفى":"اسم العريس (أو المناسبة)";$("#e-venue-l").textContent=c?"مكان العزاء للرجال":"مكان الحفل";$("#e-mentime-l").textContent=c?"وقت العزاء للرجال":"وقت الحفل للرجال"}
+document.querySelectorAll("#kindSeg button").forEach(b=>b.addEventListener("click",()=>setKind(b.dataset.k)));
+function slotEditor(box){box.replaceChildren();const id=box.id;let n=0;
+  const addRow=()=>{const i=n++;const opt=(v,t)=>el("option",{value:v,text:t});
+    const sp=el("select",{class:"sel-p",id:id+"-p"+i,"aria-label":"الفترة"},opt("","— اختر الفترة —"),...PERIODS.map(([k,t])=>opt(k,t)));
+    const hours=f=>[opt("",f),...Array.from({length:12},(_,h)=>opt(String(h+1),String(h+1)))];
+    const sf=el("select",{id:id+"-f"+i,"aria-label":"الساعة"},...hours("الساعة")),st=el("select",{id:id+"-t"+i,"aria-label":"إلى الساعة"},...hours("إلى (اختياري)"));
+    const hw=el("span",{class:"slot"},sf,st);const sync=()=>{hw.hidden=!hasHour(sp.value)};sp.addEventListener("change",sync);sync();
+    const row=el("div",{class:"slot"},sp,hw,el("button",{type:"button",class:"btn sm ghost danger","aria-label":"إزالة الفترة",onclick:()=>{row.remove();if(!box.querySelector(".slot"))addRow()}},"×"));box.insertBefore(row,addBtn)};
+  const addBtn=el("button",{type:"button",class:"btn sm addslot",onclick:addRow},"+ فترة أخرى");box.append(addBtn);addRow()}
+function readSlots(box){return[...box.querySelectorAll(":scope > .slot")].map(r=>{const [p,f,t]=r.querySelectorAll("select");const x={p:p.value};if(hasHour(x.p)&&f.value){x.from=Number(f.value);if(t.value)x.to=Number(t.value)}return x}).filter(x=>x.p)}
+function buildDayPick(){$("#d-days").replaceChildren(...DAYS.map((n,i)=>el("label",{},el("input",{type:"checkbox",id:"dd-"+i,value:String(i)}),n)))}
+$("#addEvent").addEventListener("click",()=>{$("#eventForm").reset();setKind(state.filter==="wedding"?"wedding":"condolence");$("#e-start").value=todayStr();slotEditor($("#e-menSlots"));slotEditor($("#e-womenSlots"));openSheet("أرسل مناسبة","e")});
+$("#addDiw").addEventListener("click",()=>{$("#diwForm").reset();buildDayPick();slotEditor($("#d-slots"));openSheet("أرسل ديوانك","d")});
+
+/* message lines follow the spreadsheet's column order so the owner copies them straight in */
+let lastSend="";
+function showSend(lines){lastSend=lines.filter(Boolean).join("\n");$("#sendText").textContent=lastSend;
+  $("#sendLink").href="https://wa.me/"+CONFIG.ownerWhatsApp+"?text="+encodeURIComponent(lastSend);openSheet("إرسال الطلب","s")}
+let backTo="d";
+$("#eventForm").addEventListener("submit",e=>{e.preventDefault();backTo="e";const g=f=>$("#e-"+f).value.trim();
+  let start=g("start"),end=g("end");if(!end)end=state.kind==="condolence"?addDays(start,2):start;if(end<start)end=start;
+  showSend(["طلب إضافة مناسبة – دواوين الوفرة","","النوع: "+(state.kind==="condolence"?"عزاء":"فرح"),"الاسم: "+g("person"),"العائلة: "+g("family"),"من تاريخ: "+start,"إلى تاريخ: "+end,
+    "مكان الرجال: "+g("venue"),"العنوان: "+g("area"),"وقت الرجال: "+fmtSlots(readSlots($("#e-menSlots"))),"مكان النساء: "+g("wvenue"),"وقت النساء: "+fmtSlots(readSlots($("#e-womenSlots"))),
+    "الهاتف: "+g("contact"),"رابط الموقع: "+g("map"),"ملاحظات: "+g("notes")])});
+$("#diwForm").addEventListener("submit",e=>{e.preventDefault();backTo="d";const g=f=>$("#d-"+f).value.trim();
+  const days=[...document.querySelectorAll("#d-days input:checked")].map(x=>DAYS[Number(x.value)]);
+  showSend(["طلب إضافة ديوان – دواوين الوفرة","","اسم الديوان: "+g("name"),"صاحب الديوان: "+g("owner"),"القطعة: "+g("block"),"الشارع / المنزل: "+g("street"),
+    "الأيام: "+(days.length===7?"يومياً":days.join("، ")),"وقت الاستقبال: "+fmtSlots(readSlots($("#d-slots"))),"الهاتف: "+g("phone"),"رابط الموقع: "+g("map"),"ملاحظات: "+g("notes")])});
+$("#sendCopy").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(lastSend);toast("تم النسخ")}catch(e){const r=document.createRange();r.selectNodeContents($("#sendText"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("النص محدد، انسخه يدوياً")}});
+$("#sendBack").addEventListener("click",()=>openSheet(backTo==="e"?"أرسل مناسبة":backTo==="a"?"اعتذار عن الاستقبال":"أرسل ديوانك",backTo));
+$("#sendLink").addEventListener("click",()=>setTimeout(()=>{closeSheet();toast("شكراً، سيُضاف بعد المراجعة")},400));
+
+/* ---------- apology requests ---------- */
+let apDiw=null;
+function openApology(d){apDiw=d;$("#apologyForm").reset();$("#ap-name").textContent=d.name;$("#ap-date").value=todayStr();
+  $("#ap-cancelRow").hidden=!(d.paused||d.offDates.length);syncAp();openSheet("اعتذار عن الاستقبال","a")}
+function syncAp(){const m=document.querySelector('input[name="ap-mode"]:checked').value;$("#ap-dateRow").hidden=m!=="date";$("#ap-reasonRow").hidden=m==="cancel"}
+document.querySelectorAll('input[name="ap-mode"]').forEach(x=>x.addEventListener("change",syncAp));
+$("#apologyForm").addEventListener("submit",e=>{e.preventDefault();backTo="a";const m=document.querySelector('input[name="ap-mode"]:checked').value;
+  const reason=$("#ap-reason").value.trim();const d=apDiw;
+  if(m==="date"){const dt=$("#ap-date").value;if(!dt){toast("اختر تاريخ الاعتذار");return}
+    showSend(["طلب اعتذار ديوان – دواوين الوفرة","","اسم الديوان: "+d.name,"اعتذار: "+dt+" ("+fmtLong.format(parse(dt))+")","سبب الاعتذار: "+reason])}
+  else if(m==="pause")showSend(["طلب اعتذار ديوان – دواوين الوفرة","","اسم الديوان: "+d.name,"اعتذار: متوقف حتى إشعار آخر","سبب الاعتذار: "+reason])
+  else showSend(["طلب إلغاء اعتذار – دواوين الوفرة","","اسم الديوان: "+d.name,"عاد الديوان للاستقبال، يرجى مسح خانة الاعتذار."])});
+
+/* ---------- tabs ---------- */
+function showTab(t){state.tab=t;$("#tab-events").setAttribute("aria-selected",String(t==="events"));$("#tab-diwaniyas").setAttribute("aria-selected",String(t==="diwaniyas"));$("#view-events").hidden=t!=="events";$("#view-diwaniyas").hidden=t!=="diwaniyas"}
+$("#tab-events").addEventListener("click",()=>{location.hash="events"});$("#tab-diwaniyas").addEventListener("click",()=>{location.hash="diwaniyas"});
+const fromHash=()=>showTab(location.hash==="#diwaniyas"?"diwaniyas":"events");window.addEventListener("hashchange",fromHash);fromHash();
+document.querySelectorAll("#view-events .seg button").forEach(b=>b.addEventListener("click",()=>{state.filter=b.dataset.f;document.querySelectorAll("#view-events .seg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));renderEvents()}));
+$("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("change",renderDiw);
+
+/* ---------- load ---------- */
+renderEvents();renderDiw();
+loadCsv(CONFIG.diwaniyasCsv).then(rows=>{state.diw=rows.map(r=>({name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),street:r[3]||"",days:parseDays(r[4]),hours:r[5]||"",phone:toLatin(r[6]),mapUrl:r[7]||"",notes:r[8]||"",...parseApology(r[9],r[10])})).filter(d=>d.name)})
+  .catch(()=>setNote("تعذّر تحميل الدواوين حالياً، حاول لاحقاً.")).finally(()=>{state.loaded.d=true;renderDiw()});
+loadCsv(CONFIG.eventsCsv).then(rows=>{state.events=rows.map(r=>{const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
+  return{kind:/عزا/.test(r[0]||"")?"condolence":"wedding",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||""}}).filter(e=>e.person&&e.startDate)})
+  .catch(()=>setNote("تعذّر تحميل المناسبات حالياً، حاول لاحقاً.")).finally(()=>{state.loaded.e=true;renderEvents()});
+setInterval(renderEvents,60000);
+})();
+</script>
+</body>
+</html>
