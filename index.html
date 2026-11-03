@@ -124,6 +124,11 @@ dl.facts dd{margin:0;overflow-wrap:anywhere}
 .day.today{box-shadow:0 0 0 1.5px var(--accent)}
 .photo{display:block;width:100%;max-width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;background:var(--sunk)}
 .card .photo{grid-column:1/-1}
+.admin-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:6px 12px;font-size:14px;font-weight:600}
+.footer-link{align-self:center;background:none;border:0;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;padding:8px}
+.review{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
+.review label{font-size:13px;color:var(--muted)}
+.review input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;width:100%;min-width:0}
 .apology{display:flex;flex-direction:column;gap:2px;border-radius:10px;padding:8px 12px;background:var(--azaa-soft);color:var(--ink);font-size:14px}
 .apology b{color:var(--danger);font-weight:600}
 .apology span{color:var(--muted);font-size:13px}
@@ -200,6 +205,7 @@ form{display:flex;flex-direction:column;gap:12px}
 <main>
   <div class="wrap">
     <div id="statusNote" class="note" hidden></div>
+    <div class="admin-bar" id="adminBar" hidden>وضع الإدارة: الحفظ مباشر في الجدول <span class="grow"></span><button class="btn sm" type="button" id="adminOut">خروج</button></div>
 
     <section id="view-events">
       <div class="toolbar">
@@ -209,6 +215,7 @@ form{display:flex;flex-direction:column;gap:12px}
           <button data-f="condolence" aria-pressed="false">تعازي</button>
         </div>
         <span class="grow"></span>
+        <button class="btn admin-only" id="pasteEvent" hidden>لصق طلب</button>
         <button class="btn primary" id="addEvent">أرسل مناسبة</button>
       </div>
       <div id="eventsOut" style="display:flex;flex-direction:column;gap:18px;margin-top:16px"></div>
@@ -217,6 +224,7 @@ form{display:flex;flex-direction:column;gap:12px}
     <section id="view-diwaniyas" hidden>
       <div class="toolbar">
         <input class="search" id="q" type="search" placeholder="ابحث باسم الديوان أو العائلة أو القطعة">
+        <button class="btn admin-only" id="pasteDiw" hidden>لصق طلب</button>
         <button class="btn primary" id="addDiw">أرسل ديوانك</button>
       </div>
       <div class="toolbar" style="margin-top:10px">
@@ -224,6 +232,7 @@ form{display:flex;flex-direction:column;gap:12px}
       </div>
       <div id="diwOut" class="list" style="margin-top:14px"></div>
     </section>
+    <button class="footer-link" type="button" id="adminIn">دخول الإدارة</button>
   </div>
 </main>
 
@@ -254,6 +263,7 @@ form{display:flex;flex-direction:column;gap:12px}
         <div class="field"><label for="e-map">رابط الموقع (خرائط)</label><input id="e-map" type="url" dir="ltr" placeholder="https://maps..."></div>
       </div>
       <div class="field"><label for="e-notes">ملاحظات</label><textarea id="e-notes"></textarea></div>
+      <div class="field admin-only" hidden><label for="e-photo">رابط الصورة (اختياري)</label><input id="e-photo" type="url" dir="ltr" placeholder="https://drive.google.com/..."></div>
       <div class="formactions">
         <button class="btn primary" type="submit" id="e-save">متابعة للإرسال</button>
         <button class="btn" type="button" data-close>إلغاء</button>
@@ -274,6 +284,7 @@ form{display:flex;flex-direction:column;gap:12px}
         <div class="field"><label for="d-map">رابط الموقع (خرائط)</label><input id="d-map" type="url" dir="ltr" placeholder="https://maps..."></div>
       </div>
       <div class="field"><label for="d-notes">ملاحظات</label><textarea id="d-notes" placeholder="مثال: مفتوح يومياً في رمضان بعد التراويح"></textarea></div>
+      <div class="field admin-only" hidden><label for="d-photo">رابط الصورة (اختياري)</label><input id="d-photo" type="url" dir="ltr" placeholder="https://drive.google.com/..."></div>
       <div class="formactions">
         <button class="btn primary" type="submit" id="d-save">متابعة للإرسال</button>
         <button class="btn" type="button" data-close>إلغاء</button>
@@ -297,6 +308,26 @@ form{display:flex;flex-direction:column;gap:12px}
       </div>
     </form>
 
+    <form id="pinForm" hidden>
+      <p style="margin:0;color:var(--muted)">هذا القسم لصاحب الموقع فقط. أدخل الرمز السري مرة واحدة، ويبقى محفوظاً في هذا الجهاز.</p>
+      <div class="field"><label for="pin-in">الرمز السري</label><input id="pin-in" type="password" autocomplete="current-password" required></div>
+      <p class="hijri" id="pinErr" hidden style="color:var(--danger)"></p>
+      <div class="formactions"><button class="btn primary" type="submit" id="pinGo">دخول</button><button class="btn" type="button" data-close>إلغاء</button></div>
+    </form>
+
+    <div id="pastePanel" hidden>
+      <p style="margin:0 0 10px;color:var(--muted)">الصق رسالة الطلب كما وصلتك في واتساب، ثم راجعها قبل الحفظ.</p>
+      <div class="field"><label for="paste-in">نص الرسالة</label><textarea id="paste-in" style="min-height:150px"></textarea></div>
+      <p class="hijri" id="pasteErr" hidden style="color:var(--danger)">لم أتعرف على الرسالة. تأكد من لصقها كاملة من أول سطر «طلب ...».</p>
+      <div class="formactions" style="margin-top:12px"><button class="btn primary" type="button" id="pasteGo">قراءة الطلب</button><button class="btn" type="button" data-close>إلغاء</button></div>
+    </div>
+
+    <div id="reviewPanel" hidden>
+      <p style="margin:0 0 10px;color:var(--muted)" id="reviewNote"></p>
+      <div class="review" id="reviewFields"></div>
+      <div class="formactions" style="margin-top:14px"><button class="btn primary" type="button" id="reviewSave">حفظ مباشرة</button><button class="btn" type="button" data-close>إلغاء</button></div>
+    </div>
+
     <div id="sendPanel" hidden>
       <p style="margin:0 0 10px;color:var(--muted)">راجع الطلب ثم أرسله إلى صاحب التطبيق عبر واتساب، وسيُضاف بعد التأكد منه. لإضافة صورة للديوان أو المناسبة، أرسلها في نفس محادثة الواتساب بعد الرسالة.</p>
       <pre class="preview" id="sendText"></pre>
@@ -319,7 +350,8 @@ form{display:flex;flex-direction:column;gap:12px}
 const CONFIG={
   diwaniyasCsv:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRWuKKehvUtt7zHVDSKvTqg3i39ohH98Eeis27ei0RWKYKmkA5ek7EVhnugMUo7qX7AaGrM8n0xqjnG/pub?gid=1818035409&single=true&output=csv",
   eventsCsv:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRWuKKehvUtt7zHVDSKvTqg3i39ohH98Eeis27ei0RWKYKmkA5ek7EVhnugMUo7qX7AaGrM8n0xqjnG/pub?gid=300473328&single=true&output=csv",
-  ownerWhatsApp:"96560008341"
+  ownerWhatsApp:"96560008341",
+  adminApi:"PASTE_APPS_SCRIPT_URL"
 };
 /* ===================================================== */
 const DAYS=["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
@@ -422,7 +454,7 @@ function diwCard(d){const today=new Date().getDay();
     d.hours?el("div",{text:"الاستقبال: "+d.hours}):null,d.notes?el("div",{class:"hijri",text:d.notes}):null,
     el("div",{class:"actions"},d.phone?el("button",{class:"btn sm",onclick:e=>copy(d.phone,e.currentTarget)},el("span",{class:"mono",text:d.phone})," · نسخ"):null,
       safeUrl(d.mapUrl)?el("a",{class:"btn sm",href:d.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
-      el("button",{class:"btn sm ghost",onclick:()=>openApology(d)},d.paused||d.offDates.length?"تعديل الاعتذار":"اعتذار عن الاستقبال")))}
+      el("button",{class:"btn sm ghost",onclick:()=>openApology(d)},d.paused||d.offDates.length?"تعديل الاعتذار":(admin.pin?"تسجيل اعتذار":"اعتذار عن الاستقبال"))))}
 function renderDiw(){const out=$("#diwOut");out.replaceChildren();$("#nDiw").textContent=state.diw.length;
   $("#diwList").replaceChildren(...state.diw.map(d=>el("option",{value:d.name})));
   if(!state.loaded.d){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل الدواوين…"})));return}
@@ -433,7 +465,8 @@ function renderDiw(){const out=$("#diwOut");out.replaceChildren();$("#nDiw").tex
 
 /* ---------- forms ---------- */
 const overlay=$("#overlay");
-function openSheet(title,form){$("#sheetTitle").textContent=title;$("#eventForm").hidden=form!=="e";$("#diwForm").hidden=form!=="d";$("#sendPanel").hidden=form!=="s";$("#apologyForm").hidden=form!=="a";overlay.hidden=false;if(form==="e")setTimeout(()=>$("#e-person").focus(),50);if(form==="d")setTimeout(()=>$("#d-name").focus(),50)}
+function openSheet(title,form){$("#sheetTitle").textContent=title;const P={e:"#eventForm",d:"#diwForm",s:"#sendPanel",a:"#apologyForm",p:"#pinForm",i:"#pastePanel",r:"#reviewPanel"};
+  for(const k in P)$(P[k]).hidden=k!==form;overlay.hidden=false;const f={e:"#e-person",d:"#d-name",p:"#pin-in",i:"#paste-in"}[form];if(f)setTimeout(()=>$(f).focus(),50)}
 function closeSheet(){overlay.hidden=true}
 overlay.addEventListener("click",e=>{if(e.target===overlay||e.target.hasAttribute("data-close"))closeSheet()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.hidden)closeSheet()});
@@ -453,36 +486,91 @@ function buildDayPick(){$("#d-days").replaceChildren(...DAYS.map((n,i)=>el("labe
 $("#addEvent").addEventListener("click",()=>{$("#eventForm").reset();setKind(state.filter==="wedding"?"wedding":"condolence");$("#e-start").value=todayStr();slotEditor($("#e-menSlots"));slotEditor($("#e-womenSlots"));openSheet("أرسل مناسبة","e")});
 $("#addDiw").addEventListener("click",()=>{$("#diwForm").reset();buildDayPick();slotEditor($("#d-slots"));openSheet("أرسل ديوانك","d")});
 
-/* message lines follow the spreadsheet's column order so the owner copies them straight in */
+/* message lines and sheet rows share one column order */
+const DIW_COLS=["اسم الديوان","صاحب الديوان","القطعة","الشارع / المنزل","الأيام","وقت الاستقبال","الهاتف","رابط الموقع","ملاحظات"];
+const EV_COLS=["النوع","الاسم","العائلة","من تاريخ","إلى تاريخ","مكان الرجال","العنوان","وقت الرجال","مكان النساء","وقت النساء","الهاتف","رابط الموقع","ملاحظات"];
+const DIW_TITLE="طلب إضافة ديوان – دواوين الوفرة",EV_TITLE="طلب إضافة مناسبة – دواوين الوفرة";
+const linesFor=(title,cols,row)=>[title,""].concat(cols.map((c,i)=>c+": "+(row[i]||"")));
+
+/* ---------- admin ---------- */
+const admin={pin:null};
+try{admin.pin=localStorage.getItem("wafra-admin-pin")}catch(e){}
+const apiReady=()=>/^https:\/\/script\.google\.com\//.test(CONFIG.adminApi);
+async function api(body){const r=await fetch(CONFIG.adminApi,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({pin:admin.pin},body))});
+  const j=await r.json();if(!j.ok){const err=new Error(j.error||"fail");err.code=j.error;throw err}return j}
+function applyAdmin(){const on=!!admin.pin;document.querySelectorAll(".admin-only").forEach(x=>x.hidden=!on);$("#adminBar").hidden=!on;$("#adminIn").hidden=on;
+  $("#addEvent").textContent=on?"+ إضافة مناسبة":"أرسل مناسبة";$("#addDiw").textContent=on?"+ إضافة ديوان":"أرسل ديوانك";
+  $("#e-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";$("#d-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";
+  const ap=$("#apologyForm button[type=submit]");if(ap)ap.textContent=on?"حفظ مباشرة":"متابعة للإرسال";renderDiw()}
+function adminFail(e){if(e&&e.code==="pin"){try{localStorage.removeItem("wafra-admin-pin")}catch(x){}admin.pin=null;applyAdmin();closeSheet();toast("الرمز السري غير صحيح، ادخل مرة أخرى")}
+  else toast("تعذّر الحفظ، تحقق من الاتصال وحاول مرة أخرى")}
+$("#adminIn").addEventListener("click",()=>{if(!apiReady()){toast("وضع الإدارة لم يُفعّل بعد");return}$("#pinForm").reset();$("#pinErr").hidden=true;openSheet("دخول الإدارة","p")});
+$("#adminOut").addEventListener("click",()=>{try{localStorage.removeItem("wafra-admin-pin")}catch(e){}admin.pin=null;applyAdmin();toast("تم الخروج من وضع الإدارة")});
+$("#pinForm").addEventListener("submit",async e=>{e.preventDefault();const pin=$("#pin-in").value.trim();if(!pin)return;const btn=$("#pinGo");btn.disabled=true;
+  try{admin.pin=pin;await api({action:"check"});try{localStorage.setItem("wafra-admin-pin",pin)}catch(x){}applyAdmin();closeSheet();toast("مرحباً، وضع الإدارة مفعّل")}
+  catch(err){admin.pin=null;$("#pinErr").textContent=err.code==="pin"?"الرمز غير صحيح.":"تعذّر الاتصال، حاول مرة أخرى.";$("#pinErr").hidden=false}finally{btn.disabled=false}});
+async function saveRow(sheet,row){await api({action:"append",sheet,row});
+  if(sheet==="events")state.events.push(rowToEvent(row));else state.diw.push(rowToDiw(row));
+  closeSheet();renderEvents();renderDiw();toast("تم الحفظ، يظهر للجميع خلال دقائق")}
+
 let lastSend="";
-function showSend(lines){lastSend=lines.filter(Boolean).join("\n");$("#sendText").textContent=lastSend;
+function showSend(lines){lastSend=lines.filter(x=>x!=null).join("\n");$("#sendText").textContent=lastSend;
   $("#sendLink").href="https://wa.me/"+CONFIG.ownerWhatsApp+"?text="+encodeURIComponent(lastSend);openSheet("إرسال الطلب","s")}
 let backTo="d";
-$("#eventForm").addEventListener("submit",e=>{e.preventDefault();backTo="e";const g=f=>$("#e-"+f).value.trim();
+$("#eventForm").addEventListener("submit",async e=>{e.preventDefault();backTo="e";const g=f=>$("#e-"+f).value.trim();
   let start=g("start"),end=g("end");if(!end)end=state.kind==="condolence"?addDays(start,2):start;if(end<start)end=start;
-  showSend(["طلب إضافة مناسبة – دواوين الوفرة","","النوع: "+(state.kind==="condolence"?"عزاء":"فرح"),"الاسم: "+g("person"),"العائلة: "+g("family"),"من تاريخ: "+start,"إلى تاريخ: "+end,
-    "مكان الرجال: "+g("venue"),"العنوان: "+g("area"),"وقت الرجال: "+fmtSlots(readSlots($("#e-menSlots"))),"مكان النساء: "+g("wvenue"),"وقت النساء: "+fmtSlots(readSlots($("#e-womenSlots"))),
-    "الهاتف: "+g("contact"),"رابط الموقع: "+g("map"),"ملاحظات: "+g("notes")])});
-$("#diwForm").addEventListener("submit",e=>{e.preventDefault();backTo="d";const g=f=>$("#d-"+f).value.trim();
+  const row=[state.kind==="condolence"?"عزاء":"فرح",g("person"),g("family"),start,end,g("venue"),g("area"),fmtSlots(readSlots($("#e-menSlots"))),g("wvenue"),fmtSlots(readSlots($("#e-womenSlots"))),g("contact"),g("map"),g("notes")];
+  if(admin.pin){row.push(g("photo"));const b=$("#e-save");b.disabled=true;try{await saveRow("events",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
+  showSend(linesFor(EV_TITLE,EV_COLS,row))});
+$("#diwForm").addEventListener("submit",async e=>{e.preventDefault();backTo="d";const g=f=>$("#d-"+f).value.trim();
   const days=[...document.querySelectorAll("#d-days input:checked")].map(x=>DAYS[Number(x.value)]);
-  showSend(["طلب إضافة ديوان – دواوين الوفرة","","اسم الديوان: "+g("name"),"صاحب الديوان: "+g("owner"),"القطعة: "+g("block"),"الشارع / المنزل: "+g("street"),
-    "الأيام: "+(days.length===7?"يومياً":days.join("، ")),"وقت الاستقبال: "+fmtSlots(readSlots($("#d-slots"))),"الهاتف: "+g("phone"),"رابط الموقع: "+g("map"),"ملاحظات: "+g("notes")])});
+  const row=[g("name"),g("owner"),g("block"),g("street"),days.length===7?"يومياً":days.join("، "),fmtSlots(readSlots($("#d-slots"))),g("phone"),g("map"),g("notes")];
+  if(admin.pin){row.push("","",g("photo"));const b=$("#d-save");b.disabled=true;try{await saveRow("diwaniyas",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
+  showSend(linesFor(DIW_TITLE,DIW_COLS,row))});
 $("#sendCopy").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(lastSend);toast("تم النسخ")}catch(e){const r=document.createRange();r.selectNodeContents($("#sendText"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("النص محدد، انسخه يدوياً")}});
 $("#sendBack").addEventListener("click",()=>openSheet(backTo==="e"?"أرسل مناسبة":backTo==="a"?"اعتذار عن الاستقبال":"أرسل ديوانك",backTo));
 $("#sendLink").addEventListener("click",()=>setTimeout(()=>{closeSheet();toast("شكراً، سيُضاف بعد المراجعة")},400));
 
-/* ---------- apology requests ---------- */
+/* ---------- apology ---------- */
 let apDiw=null;
 function openApology(d){apDiw=d;$("#apologyForm").reset();$("#ap-name").textContent=d.name;$("#ap-date").value=todayStr();
   $("#ap-cancelRow").hidden=!(d.paused||d.offDates.length);syncAp();openSheet("اعتذار عن الاستقبال","a")}
 function syncAp(){const m=document.querySelector('input[name="ap-mode"]:checked').value;$("#ap-dateRow").hidden=m!=="date";$("#ap-reasonRow").hidden=m==="cancel"}
 document.querySelectorAll('input[name="ap-mode"]').forEach(x=>x.addEventListener("change",syncAp));
-$("#apologyForm").addEventListener("submit",e=>{e.preventDefault();backTo="a";const m=document.querySelector('input[name="ap-mode"]:checked').value;
-  const reason=$("#ap-reason").value.trim();const d=apDiw;
-  if(m==="date"){const dt=$("#ap-date").value;if(!dt){toast("اختر تاريخ الاعتذار");return}
-    showSend(["طلب اعتذار ديوان – دواوين الوفرة","","اسم الديوان: "+d.name,"اعتذار: "+dt+" ("+fmtLong.format(parse(dt))+")","سبب الاعتذار: "+reason])}
-  else if(m==="pause")showSend(["طلب اعتذار ديوان – دواوين الوفرة","","اسم الديوان: "+d.name,"اعتذار: متوقف حتى إشعار آخر","سبب الاعتذار: "+reason])
+async function saveApology(name,mode,date,reason){const r=await api({action:"apology",name,mode,date,reason});
+  const d=state.diw.find(x=>x.name===name);if(d){Object.assign(d,parseApology(r.value||"",mode==="cancel"?"":reason))}
+  closeSheet();renderDiw();toast(mode==="cancel"?"تم إلغاء الاعتذار":"تم حفظ الاعتذار")}
+$("#apologyForm").addEventListener("submit",async e=>{e.preventDefault();backTo="a";const m=document.querySelector('input[name="ap-mode"]:checked').value;
+  const reason=$("#ap-reason").value.trim();const d=apDiw;const dt=$("#ap-date").value;
+  if(m==="date"&&!dt){toast("اختر تاريخ الاعتذار");return}
+  if(admin.pin){const b=$("#apologyForm button[type=submit]");b.disabled=true;try{await saveApology(d.name,m,dt,reason)}catch(err){adminFail(err)}finally{b.disabled=false}return}
+  if(m==="date")showSend(["طلب اعتذار ديوان – دواوين الوفرة","","اسم الديوان: "+d.name,"اعتذار: "+dt+" ("+fmtLong.format(parse(dt))+")","سبب الاعتذار: "+reason]);
+  else if(m==="pause")showSend(["طلب اعتذار ديوان – دواوين الوفرة","","اسم الديوان: "+d.name,"اعتذار: متوقف حتى إشعار آخر","سبب الاعتذار: "+reason]);
   else showSend(["طلب إلغاء اعتذار – دواوين الوفرة","","اسم الديوان: "+d.name,"عاد الديوان للاستقبال، يرجى مسح خانة الاعتذار."])});
+
+/* ---------- paste a WhatsApp request (admin) ---------- */
+let pending=null;
+function openPaste(){$("#paste-in").value="";$("#pasteErr").hidden=true;openSheet("لصق طلب من واتساب","i")}
+$("#pasteEvent").addEventListener("click",openPaste);$("#pasteDiw").addEventListener("click",openPaste);
+function readPairs(text){const m={};text.split(/\r?\n/).forEach(l=>{const i=l.indexOf(":");if(i>0)m[l.slice(0,i).replace(/[*_]/g,"").trim()]=l.slice(i+1).trim()});return m}
+$("#pasteGo").addEventListener("click",()=>{const t=$("#paste-in").value;const kv=readPairs(t);let kind=null,cols=null,note="";
+  if(/طلب إلغاء اعتذار/.test(t)&&kv["اسم الديوان"])kind="cancel";
+  else if(/طلب اعتذار/.test(t)&&kv["اسم الديوان"])kind="apology";
+  else if(/طلب إضافة مناسبة/.test(t)&&kv["الاسم"]){kind="events";cols=EV_COLS}
+  else if(/طلب إضافة ديوان/.test(t)&&kv["اسم الديوان"]){kind="diwaniyas";cols=DIW_COLS}
+  if(!kind){$("#pasteErr").hidden=false;return}
+  const box=$("#reviewFields");box.replaceChildren();const add=(label,val,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:label}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف/.test(label)?"ltr":"auto"}),{value:val||""}))};
+  if(kind==="events"||kind==="diwaniyas"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
+  else{add("اسم الديوان",kv["اسم الديوان"],0);
+    if(kind==="apology"){const v=kv["اعتذار"]||"";const dt=(toLatin(v).match(/\d{4}-\d{2}-\d{2}/)||[""])[0];add("اعتذار",/متوقف/.test(v)?"متوقف":dt,1);add("سبب الاعتذار",kv["سبب الاعتذار"],2);note="طلب اعتذار. اكتب التاريخ بصيغة 2026-11-06 أو كلمة متوقف."}
+    else note="طلب إلغاء اعتذار: سيُمسح الاعتذار ويعود الديوان طبيعياً."}
+  pending=kind;$("#reviewNote").textContent=note;openSheet("مراجعة الطلب","r")});
+$("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFields").querySelectorAll("input")].map(x=>x.value.trim());const b=$("#reviewSave");b.disabled=true;
+  try{if(pending==="events"){const row=vals.slice(0,13);row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4];row.push(vals[13]);await saveRow("events",row)}
+    else if(pending==="diwaniyas"){const row=vals.slice(0,9);row.push("","",vals[9]);await saveRow("diwaniyas",row)}
+    else if(pending==="apology"){const v=vals[1];await saveApology(vals[0],/متوقف/.test(v)?"pause":"date",normDate(v),vals[2])}
+    else await saveApology(vals[0],"cancel","","")}
+  catch(err){if(err.code==="notfound")toast("لم أجد ديواناً بهذا الاسم في الجدول");else adminFail(err)}finally{b.disabled=false}});
 
 /* ---------- tabs ---------- */
 function showTab(t){state.tab=t;$("#tab-events").setAttribute("aria-selected",String(t==="events"));$("#tab-diwaniyas").setAttribute("aria-selected",String(t==="diwaniyas"));$("#view-events").hidden=t!=="events";$("#view-diwaniyas").hidden=t!=="diwaniyas"}
@@ -492,11 +580,13 @@ document.querySelectorAll("#view-events .seg button").forEach(b=>b.addEventListe
 $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("change",renderDiw);
 
 /* ---------- load ---------- */
-renderEvents();renderDiw();
-loadCsv(CONFIG.diwaniyasCsv).then(rows=>{state.diw=rows.map(r=>({name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),street:r[3]||"",days:parseDays(r[4]),hours:r[5]||"",phone:toLatin(r[6]),mapUrl:r[7]||"",notes:r[8]||"",...parseApology(r[9],r[10]),photo:r[11]||""})).filter(d=>d.name)})
+function rowToDiw(r){return{name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),street:r[3]||"",days:parseDays(r[4]),hours:r[5]||"",phone:toLatin(r[6]),mapUrl:r[7]||"",notes:r[8]||"",...parseApology(r[9],r[10]),photo:r[11]||""}}
+function rowToEvent(r){const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
+  return{kind:/عزا/.test(r[0]||"")?"condolence":"wedding",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||""}}
+applyAdmin();renderEvents();renderDiw();
+loadCsv(CONFIG.diwaniyasCsv).then(rows=>{state.diw=rows.map(rowToDiw).filter(d=>d.name)})
   .catch(()=>setNote("تعذّر تحميل الدواوين حالياً، حاول لاحقاً.")).finally(()=>{state.loaded.d=true;renderDiw()});
-loadCsv(CONFIG.eventsCsv).then(rows=>{state.events=rows.map(r=>{const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
-  return{kind:/عزا/.test(r[0]||"")?"condolence":"wedding",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||""}}).filter(e=>e.person&&e.startDate)})
+loadCsv(CONFIG.eventsCsv).then(rows=>{state.events=rows.map(rowToEvent).filter(e=>e.person&&e.startDate)})
   .catch(()=>setNote("تعذّر تحميل المناسبات حالياً، حاول لاحقاً.")).finally(()=>{state.loaded.e=true;renderEvents()});
 setInterval(renderEvents,60000);
 })();
