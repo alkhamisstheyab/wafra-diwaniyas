@@ -442,7 +442,10 @@ const offToday=d=>d.paused||d.offDates.includes(todayStr());
 function weekOff(d){/* weekday indexes cancelled within the next 7 days */const t=todayStr(),lim=addDays(t,6);return d.offDates.filter(x=>x<=lim).map(x=>parse(x).getDay())}
 function diwCard(d){const today=new Date().getDay();
   const off=weekOff(d);
-  const days=el("div",{class:"days"},...DAYS.map((n,i)=>el("span",{class:"day"+(d.days.includes(i)?" on":"")+(i===today?" today":"")+(d.paused||off.includes(i)?" off":""),text:n})));
+  const daily=d.days.length===7;
+  const days=d.days.length?el("div",{class:"days"},...(daily?[el("span",{class:"day on"+(d.paused||off.includes(today)?" off":""),text:"يومياً"})]
+    :[...d.days].sort((x,y)=>x-y).map(i=>el("span",{class:"day on"+(d.paused||off.includes(i)?" off":""),text:DAYS[i]}))),
+    !d.paused&&d.days.includes(today)&&!off.includes(today)?el("span",{class:"open-now",text:"● يستقبل اليوم"}):null):null;
   let ap=null;
   if(d.paused)ap=el("div",{class:"apology"},el("b",{text:"الديوان معتذر مؤقتاً عن الاستقبال"}),d.reason?el("span",{text:d.reason}):null,el("span",{text:"سيعود الاستقبال عند إعلان صاحب الديوان"}));
   else if(d.offDates.length){const first=d.offDates[0];
