@@ -498,13 +498,15 @@ const admin={pin:null};
 try{admin.pin=localStorage.getItem("wafra-admin-pin")}catch(e){}
 const apiReady=()=>/^https:\/\/script\.google\.com\//.test(CONFIG.adminApi);
 async function api(body){const r=await fetch(CONFIG.adminApi,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({pin:admin.pin},body))});
-  const j=await r.json();if(!j.ok){const err=new Error(j.error||"fail");err.code=j.error;throw err}return j}
+  const t=await r.text();let j;try{j=JSON.parse(t)}catch(x){const m=t.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();const err=new Error("server");err.detail=(m.match(/(Exception|Error|خطأ)[^.]{0,140}/)||[m.slice(0,140)])[0];throw err}
+  if(!j.ok){const err=new Error(j.error||"fail");err.code=j.error;throw err}return j}
 function applyAdmin(){const on=!!admin.pin;document.querySelectorAll(".admin-only").forEach(x=>x.hidden=!on);$("#adminBar").hidden=!on;$("#adminIn").hidden=on;
   $("#addEvent").textContent=on?"+ إضافة مناسبة":"أرسل مناسبة";$("#addDiw").textContent=on?"+ إضافة ديوان":"أرسل ديوانك";
   $("#e-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";$("#d-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";
   const ap=$("#apologyForm button[type=submit]");if(ap)ap.textContent=on?"حفظ مباشرة":"متابعة للإرسال";renderDiw()}
 function adminFail(e){if(e&&e.code==="pin"){try{localStorage.removeItem("wafra-admin-pin")}catch(x){}admin.pin=null;applyAdmin();closeSheet();toast("الرمز السري غير صحيح، ادخل مرة أخرى")}
-  else if(e&&e.message==="img")toast("تعذّر قراءة الصورة، جرّب صورة أخرى");else toast("تعذّر الحفظ، تحقق من الاتصال وحاول مرة أخرى")}
+  else if(e&&e.message==="img")toast("تعذّر قراءة الصورة، جرّب صورة أخرى");else if(e&&e.detail){setNote("تعذّر الحفظ. رسالة الجدول: "+e.detail);closeSheet();toast("تعذّر الحفظ، انظر الملاحظة أعلى الصفحة")}
+  else{setNote("تعذّر الحفظ: "+((e&&(e.code||e.message))||"خطأ غير معروف"));toast("تعذّر الحفظ")}}
 $("#adminIn").addEventListener("click",()=>{if(!apiReady()){toast("وضع الإدارة لم يُفعّل بعد");return}$("#pinForm").reset();$("#pinErr").hidden=true;openSheet("دخول الإدارة","p")});
 $("#adminOut").addEventListener("click",()=>{try{localStorage.removeItem("wafra-admin-pin")}catch(e){}admin.pin=null;applyAdmin();toast("تم الخروج من وضع الإدارة")});
 $("#pinForm").addEventListener("submit",async e=>{e.preventDefault();const pin=$("#pin-in").value.trim();if(!pin)return;const btn=$("#pinGo");btn.disabled=true;
