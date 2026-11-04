@@ -419,7 +419,7 @@ function csv(text){const rows=[];let row=[],f="",q=false;for(let i=0;i<text.leng
   if(f!==""||row.length){row.push(f);rows.push(row)}return rows.map(r=>r.map(x=>x.trim()))}
 const toLatin=s=>String(s||"").replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d));
 function normDate(s){s=toLatin(s).trim();let m=s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);if(m)return m[1]+"-"+pad(m[2])+"-"+pad(m[3]);
-  m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);if(m)return m[3]+"-"+pad(m[2])+"-"+pad(m[1]);return""}
+  m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);if(m){let a=+m[1],b=+m[2];const[dd,mm]=a>12?[a,b]:b>12?[b,a]:[a,b];if(mm<1||mm>12||dd<1||dd>31)return"";return m[3]+"-"+pad(mm)+"-"+pad(dd)}return""}
 const normAr=s=>String(s||"").replace(/[إأآ]/g,"ا");
 function parseDays(t){t=normAr(t);if(/يومي|كل الايام|طوال الاسبوع/.test(t))return[0,1,2,3,4,5,6];return DAYS.map((d,i)=>t.includes(normAr(d).replace("ال",""))?i:-1).filter(i=>i>=0)}
 async function loadCsv(url){if(!/^https:\/\//.test(url))throw new Error("config");const r=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now());if(!r.ok)throw new Error("http");const rows=csv(await r.text());return rows.slice(1).map((r,k)=>(r._row=k+2,r)).filter(r=>r.some(Boolean))}
@@ -517,7 +517,7 @@ document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("#light
 $("#lbClose").addEventListener("click",closePhoto);$("#lightbox").addEventListener("click",e=>{if(e.target.id==="lightbox")closePhoto()});
 function setKind(k){state.kind=k;document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.k===k)));
   const c=k==="condolence";$("#e-person-l").textContent=c?"اسم المتوفى":"اسم العريس (أو المناسبة)";$("#e-venue-l").textContent=c?"مكان العزاء للرجال":"مكان الحفل";$("#e-mentime-l").textContent=c?"وقت العزاء للرجال":"وقت الحفل للرجال"}
-document.querySelectorAll("#kindSeg button").forEach(b=>b.addEventListener("click",()=>setKind(b.dataset.k)));
+document.querySelectorAll("#kindSeg button").forEach(b=>b.addEventListener("click",()=>{setKind(b.dataset.k);const st=$("#e-start");if(b.dataset.k==="wedding"&&st.value===todayStr())st.value="";if(b.dataset.k==="condolence"&&!st.value)st.value=todayStr()}));
 function slotEditor(box){box.replaceChildren();const id=box.id;let n=0;
   const addRow=()=>{const i=n++;const opt=(v,t)=>el("option",{value:v,text:t});
     const sp=el("select",{class:"sel-p",id:id+"-p"+i,"aria-label":"الفترة"},opt("","— اختر الفترة —"),...PERIODS.map(([k,t])=>opt(k,t)));
@@ -528,7 +528,7 @@ function slotEditor(box){box.replaceChildren();const id=box.id;let n=0;
   const addBtn=el("button",{type:"button",class:"btn sm addslot",onclick:addRow},"+ فترة أخرى");box.append(addBtn);addRow()}
 function readSlots(box){return[...box.querySelectorAll(":scope > .slot")].map(r=>{const [p,f,t]=r.querySelectorAll("select");const x={p:p.value};if(hasHour(x.p)&&f.value){x.from=Number(f.value);if(t.value)x.to=Number(t.value)}return x}).filter(x=>x.p)}
 function buildDayPick(){$("#d-days").replaceChildren(...DAYS.map((n,i)=>el("label",{},el("input",{type:"checkbox",id:"dd-"+i,value:String(i)}),n)))}
-$("#addEvent").addEventListener("click",()=>{$("#eventForm").reset();setKind(state.filter==="wedding"?"wedding":"condolence");$("#e-start").value=todayStr();slotEditor($("#e-menSlots"));slotEditor($("#e-womenSlots"));openSheet("أرسل مناسبة","e")});
+$("#addEvent").addEventListener("click",()=>{$("#eventForm").reset();setKind(state.filter==="wedding"?"wedding":"condolence");$("#e-start").value=state.kind==="condolence"?todayStr():"";slotEditor($("#e-menSlots"));slotEditor($("#e-womenSlots"));openSheet("أرسل مناسبة","e")});
 $("#addDiw").addEventListener("click",()=>{$("#diwForm").reset();buildDayPick();slotEditor($("#d-slots"));openSheet("أرسل ديوانك","d")});
 
 /* message lines and sheet rows share one column order */
@@ -574,6 +574,7 @@ let backTo="d";
 $("#eventForm").addEventListener("submit",async e=>{e.preventDefault();backTo="e";const g=f=>$("#e-"+f).value.trim();
   let start=g("start"),end=g("end");if(!end)end=state.kind==="condolence"?addDays(start,2):start;if(end<start)end=start;
   const row=[state.kind==="condolence"?"عزاء":"فرح",g("person"),g("family"),start,end,g("venue"),g("area"),fmtSlots(readSlots($("#e-menSlots"))),g("wvenue"),fmtSlots(readSlots($("#e-womenSlots"))),g("contact"),g("map"),g("notes")];
+  if(admin.pin&&state.events.some(x=>x.person.trim()===row[1].trim()&&x.startDate===row[3])){setNote("«"+row[1]+"» مسجّلة مسبقاً بنفس التاريخ "+row[3]+"، فلم أكررها. لتغيير شيء فيها استخدم زر «تعديل» في بطاقتها.");closeSheet();toast("المناسبة موجودة مسبقاً");return}
   if(admin.pin){const b=$("#e-save");b.disabled=true;try{row.push(await photoFrom($("#e-file"),g("photo")));await saveRow("events",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
   showSend(linesFor(EV_TITLE,EV_COLS,row))});
 $("#diwForm").addEventListener("submit",async e=>{e.preventDefault();backTo="d";const g=f=>$("#d-"+f).value.trim();
@@ -660,10 +661,19 @@ function rowToDiw(r){return{name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),str
 function rowToEvent(r){const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
   return{kind:/عزا/.test(r[0]||"")?"condolence":"wedding",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||"",_row:r._row,raw:Array.from({length:14},(_,k)=>r[k]||"")}}
 applyAdmin();renderEvents();renderDiw();
-loadCsv(CONFIG.diwaniyasCsv).then(rows=>{state.diw=rows.map(rowToDiw).filter(d=>d.name)})
-  .catch(()=>setNote("تعذّر تحميل الدواوين حالياً، حاول لاحقاً.")).finally(()=>{state.loaded.d=true;renderDiw()});
-loadCsv(CONFIG.eventsCsv).then(rows=>{state.events=rows.map(rowToEvent).filter(e=>e.person&&e.startDate)})
-  .catch(()=>setNote("تعذّر تحميل المناسبات حالياً، حاول لاحقاً.")).finally(()=>{state.loaded.e=true;renderEvents();focusEv()});
+async function loadLive(){if(!apiReady())throw new Error("no api");const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),9000);
+  try{const r=await fetch(CONFIG.adminApi+"?t="+Date.now(),{signal:ctl.signal});const j=JSON.parse(await r.text());if(!j.ok)throw new Error("bad");
+    const rows=list=>list.map(x=>{const r=x.v.map(v=>String(v==null?"":v).trim());r._row=x.row;return r}).filter(r=>r.some(Boolean));
+    return{diw:rows(j.diwaniyas||[]),ev:rows(j.events||[])}}finally{clearTimeout(t)}}
+function useRows(diwRows,evRows){state.diw=diwRows.map(rowToDiw).filter(d=>d.name);
+  const bad=[];state.events=evRows.map(r=>{const e=rowToEvent(r);if(!(e.person&&e.startDate))bad.push(r._row);return e}).filter(e=>e.person&&e.startDate);
+  state.badRows=bad}
+function adminChecks(){if(!admin.pin||!state.badRows||!state.badRows.length)return;
+  setNote("صفوف في ورقة المناسبات لا تظهر لأن الاسم أو التاريخ ناقص أو بصيغة غير مفهومة: الصف "+state.badRows.join("، ")+". افتح الجدول وصحّح التاريخ بصيغة 2026-11-06.")}
+loadLive().then(d=>{state.src="live";useRows(d.diw,d.ev)})
+  .catch(()=>Promise.all([loadCsv(CONFIG.diwaniyasCsv),loadCsv(CONFIG.eventsCsv)]).then(([dr,er])=>{state.src="csv";useRows(dr,er)}))
+  .catch(()=>setNote("تعذّر تحميل البيانات حالياً، حاول لاحقاً."))
+  .finally(()=>{state.loaded.d=state.loaded.e=true;renderDiw();renderEvents();focusEv();adminChecks()});
 setInterval(renderEvents,60000);
 })();
 </script>
