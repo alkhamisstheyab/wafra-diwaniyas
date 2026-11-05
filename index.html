@@ -138,7 +138,7 @@ dl.facts dd{margin:0;overflow-wrap:anywhere}
 .review{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
 .review label{font-size:13px;color:var(--muted)}
 .review input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;width:100%;min-width:0}
-.card.focus{box-shadow:0 0 0 2px var(--accent)}
+.card.focus,.dcard.focus{box-shadow:0 0 0 2px var(--accent)}
 .dhead{display:flex;align-items:center;gap:12px;min-width:0}
 .dhead h3{min-width:0;overflow-wrap:anywhere}
 .dlogo{width:52px;height:52px;flex:none;border-radius:50%;object-fit:cover;background:var(--sunk);border:1px solid var(--line);cursor:zoom-in}
@@ -430,11 +430,24 @@ function evKey(start,person){const t=String(start||"")+"|"+String(person||"").tr
 const SITE="https://wafra-diwaniyas.pages.dev";
 const evLink=ev=>SITE+"/e/"+evKey(ev.startDate,ev.person);
 function driveId(u){const m=String(u||"").match(/(?:\/file\/d\/|[?&]id=)([\w-]{20,})/);return m?m[1]:null}
-async function shareEvent(ev,btn){const text=announce(ev);const id=driveId(ev.photo);
-  if(id&&navigator.canShare){try{const r=await fetch("/img?id="+id);if(r.ok){const blob=await r.blob();const file=new File([blob],"دعوة.jpg",{type:blob.type||"image/jpeg"});
+const dwKey=d=>evKey("dw",d.name);
+const dwLink=d=>SITE+"/d/"+dwKey(d);
+function diwInvite(d){const L=["☕ دعوة لزيارة "+d.name];
+  if(d.owner)L.push("صاحب الديوان: "+d.owner);
+  const addr=[d.block?"قطعة "+d.block:"",d.street].filter(Boolean).join(" · ");L.push("المكان: مدينة الوفرة السكنية"+(addr?" · "+addr:""));
+  if(d.days.length)L.push("أيام الاستقبال: "+(d.days.length===7?"يومياً":[...d.days].sort((a,b)=>a-b).map(i=>DAYS[i]).join("، ")));
+  if(d.hours)L.push("الوقت: "+d.hours);
+  if(d.paused)L.push("⚠️ الديوان معتذر حالياً عن الاستقبال حتى إشعار آخر");
+  else if(d.offDates.length)L.push("⚠️ معتذر يوم "+d.offDates.slice(0,3).map(x=>fmtLong.format(parse(x))).join("، "));
+  if(d.phone)L.push("للتواصل: "+d.phone);if(safeUrl(d.mapUrl))L.push("الموقع: "+d.mapUrl);if(d.notes)L.push(d.notes);
+  L.push("حيّاكم الله ويا هلا بالجميع 🤍","","📲 التفاصيل في تطبيق دواوين الوفرة:",dwLink(d));return L.join("\n")}
+async function shareText(text,photo,fname){const id=driveId(photo);
+  if(id&&navigator.canShare){try{const r=await fetch("/img?id="+id);if(r.ok){const blob=await r.blob();const file=new File([blob],fname,{type:blob.type||"image/jpeg"});
       if(navigator.canShare({files:[file]})){await navigator.share({files:[file],text});return}}}catch(e){if(e&&e.name==="AbortError")return}}
   if(navigator.share&&!id){try{await navigator.share({text});return}catch(e){if(e&&e.name==="AbortError")return}}
   location.href="https://wa.me/?text="+encodeURIComponent(text)}
+const shareDiw=d=>shareText(diwInvite(d),d.photo||d.logo,"دعوة ديوان.jpg");
+async function shareEvent(ev,btn){return shareText(announce(ev),ev.photo,"دعوة.jpg")}
 function announce(ev){const L=[];const range=ev.endDate&&ev.endDate!==ev.startDate?("من "+fmtLong.format(parse(ev.startDate))+" إلى "+fmtLong.format(parse(ev.endDate))):fmtLong.format(parse(ev.startDate));
   const who=ev.person+(ev.family&&!ev.person.includes(ev.family)?" "+ev.family:"");
   if(ev.kind==="condolence"){L.push("انتقل إلى رحمة الله تعالى: "+who);L.push("العزاء للرجال: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("العزاء للنساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
@@ -492,10 +505,11 @@ function diwCard(d){const today=new Date().getDay();
       d.offDates.length>1?el("span",{text:"وأيضاً: "+d.offDates.slice(1,4).map(x=>fmtLong.format(parse(x))).join("، ")}):null,
       d.reason?el("span",{text:d.reason}):null)}
   const addr=[d.block?"قطعة "+d.block:"",d.street].filter(Boolean).join(" · ");
-  return el("article",{class:"dcard"+(offToday(d)?" closed":"")},photoEl(d.photo,d.name),el("div",{class:"dhead"},logoEl(d),el("h3",{text:d.name})),
+  return el("article",{class:"dcard"+(offToday(d)?" closed":""),id:"dw-"+dwKey(d)},photoEl(d.photo,d.name),el("div",{class:"dhead"},logoEl(d),el("h3",{text:d.name})),
     d.owner||addr?el("div",{class:"hijri",text:[d.owner,addr].filter(Boolean).join(" — ")}):null,ap,days,
     d.hours?el("div",{text:"الاستقبال: "+d.hours}):null,d.notes?el("div",{class:"hijri",text:d.notes}):null,
     el("div",{class:"actions"},d.phone?el("button",{class:"btn sm",onclick:e=>copy(d.phone,e.currentTarget)},el("span",{class:"mono",text:d.phone})," · نسخ"):null,
+      el("button",{class:"btn sm",type:"button",onclick:()=>shareDiw(d)},"دعوة واتساب"),
       safeUrl(d.mapUrl)?el("a",{class:"btn sm",href:d.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
       admin.pin&&d._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("diwaniyas",d)},"تعديل"):null,
       el("button",{class:"btn sm ghost",onclick:()=>openApology(d)},d.paused||d.offDates.length?"تعديل الاعتذار":(admin.pin?"تسجيل اعتذار":"اعتذار عن الاستقبال"))))}
@@ -651,8 +665,8 @@ $("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFie
 /* ---------- tabs ---------- */
 function showTab(t){state.tab=t;$("#tab-events").setAttribute("aria-selected",String(t==="events"));$("#tab-diwaniyas").setAttribute("aria-selected",String(t==="diwaniyas"));$("#view-events").hidden=t!=="events";$("#view-diwaniyas").hidden=t!=="diwaniyas"}
 $("#tab-events").addEventListener("click",()=>{location.hash="events"});$("#tab-diwaniyas").addEventListener("click",()=>{location.hash="diwaniyas"});
-const fromHash=()=>{showTab(location.hash==="#diwaniyas"?"diwaniyas":"events");focusEv()};
-function focusEv(){const h=location.hash;if(!/^#ev-/.test(h))return;const c=document.getElementById(h.slice(1));if(c){c.scrollIntoView({block:"center"});c.classList.add("focus")}}window.addEventListener("hashchange",fromHash);fromHash();
+const fromHash=()=>{showTab(/^#(diwaniyas|dw-)/.test(location.hash)?"diwaniyas":"events");focusEv()};
+function focusEv(){const h=location.hash;if(!/^#(ev|dw)-/.test(h))return;const c=document.getElementById(h.slice(1));if(c){c.scrollIntoView({block:"center"});c.classList.add("focus")}}window.addEventListener("hashchange",fromHash);fromHash();
 document.querySelectorAll("#view-events .seg button").forEach(b=>b.addEventListener("click",()=>{state.filter=b.dataset.f;document.querySelectorAll("#view-events .seg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));renderEvents()}));
 $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("change",renderDiw);
 
