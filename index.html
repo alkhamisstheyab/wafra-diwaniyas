@@ -142,6 +142,8 @@ dl.facts dd{margin:0;overflow-wrap:anywhere}
 .dhead{display:flex;align-items:center;gap:12px;min-width:0}
 .dhead h3{min-width:0;overflow-wrap:anywhere}
 .dlogo{width:52px;height:52px;flex:none;border-radius:50%;object-fit:cover;background:var(--sunk);border:1px solid var(--line);cursor:zoom-in}
+.ad-when{font-weight:600;color:var(--accent)}
+.ad-details{white-space:pre-wrap;overflow-wrap:anywhere}
 .apology{display:flex;flex-direction:column;gap:2px;border-radius:10px;padding:8px 12px;background:var(--azaa-soft);color:var(--ink);font-size:14px}
 .apology b{color:var(--danger);font-weight:600}
 .apology span{color:var(--muted);font-size:13px}
@@ -212,6 +214,7 @@ form{display:flex;flex-direction:column;gap:12px}
   <div class="wrap" role="tablist">
     <button class="tab" role="tab" id="tab-events" aria-selected="true">المناسبات <span class="n" id="nEvents">0</span></button>
     <button class="tab" role="tab" id="tab-diwaniyas" aria-selected="false">الدواوين <span class="n" id="nDiw">0</span></button>
+    <button class="tab" role="tab" id="tab-ads" aria-selected="false">الإعلانات <span class="n" id="nAds">0</span></button>
   </div>
 </nav>
 
@@ -244,6 +247,14 @@ form{display:flex;flex-direction:column;gap:12px}
         <label class="check"><input type="checkbox" id="openToday"> المفتوحة اليوم فقط</label>
       </div>
       <div id="diwOut" class="list" style="margin-top:14px"></div>
+    </section>
+    <section id="view-ads" hidden>
+      <div class="toolbar">
+        <p class="hijri" style="margin:0;flex:1 1 200px">مهرجانات وفعاليات وعروض تهم أهالي الوفرة</p>
+        <button class="btn admin-only" id="pasteAd" hidden>لصق طلب</button>
+        <button class="btn primary" id="addAd">أرسل إعلان</button>
+      </div>
+      <div id="adOut" class="list" style="margin-top:14px"></div>
     </section>
     <button class="footer-link" type="button" id="adminIn">دخول الإدارة</button>
   </div>
@@ -279,6 +290,28 @@ form{display:flex;flex-direction:column;gap:12px}
       <div class="field admin-only" hidden><label for="e-file">صورة (اختياري)</label><input id="e-file" type="file" accept="image/*"><input id="e-photo" type="url" dir="ltr" placeholder="أو الصق رابط صورة https://..."></div>
       <div class="formactions">
         <button class="btn primary" type="submit" id="e-save">متابعة للإرسال</button>
+        <button class="btn" type="button" data-close>إلغاء</button>
+      </div>
+    </form>
+
+    <form id="adForm" hidden>
+      <div class="field"><label for="a-title">عنوان الإعلان</label><input id="a-title" required placeholder="مثال: مهرجان البر"></div>
+      <div class="field"><label for="a-org">الجهة المنظمة</label><input id="a-org" placeholder="مثال: جمعية الوفرة التعاونية"></div>
+      <div class="two">
+        <div class="field"><label for="a-start">من تاريخ</label><input id="a-start" type="date" required></div>
+        <div class="field"><label for="a-end">إلى تاريخ</label><input id="a-end" type="date"></div>
+      </div>
+      <div class="field"><label for="a-place">المكان</label><input id="a-place"></div>
+      <div class="field"><label for="a-time">الوقت</label><input id="a-time" placeholder="مثال: يومياً من 4 عصراً إلى 11 مساءً"></div>
+      <div class="field"><label for="a-details">التفاصيل</label><textarea id="a-details" placeholder="الفعاليات، العروض، الأسعار…"></textarea></div>
+      <div class="two">
+        <div class="field"><label for="a-phone">هاتف</label><input id="a-phone" type="tel" inputmode="tel" dir="ltr"></div>
+        <div class="field"><label for="a-link">رابط (حساب أو صفحة)</label><input id="a-link" type="url" dir="ltr" placeholder="https://..."></div>
+      </div>
+      <div class="field"><label for="a-map">رابط الموقع (خرائط)</label><input id="a-map" type="url" dir="ltr" placeholder="https://maps..."></div>
+      <div class="field admin-only" hidden><label for="a-file">صورة الإعلان (اختياري)</label><input id="a-file" type="file" accept="image/*"><input id="a-photo" type="url" dir="ltr" placeholder="أو الصق رابط صورة https://..."></div>
+      <div class="formactions">
+        <button class="btn primary" type="submit" id="a-save">متابعة للإرسال</button>
         <button class="btn" type="button" data-close>إلغاء</button>
       </div>
     </form>
@@ -523,8 +556,8 @@ function renderDiw(){const out=$("#diwOut");out.replaceChildren();$("#nDiw").tex
 
 /* ---------- forms ---------- */
 const overlay=$("#overlay");
-function openSheet(title,form){$("#sheetTitle").textContent=title;const P={e:"#eventForm",d:"#diwForm",s:"#sendPanel",a:"#apologyForm",p:"#pinForm",i:"#pastePanel",r:"#reviewPanel"};
-  for(const k in P)$(P[k]).hidden=k!==form;overlay.hidden=false;const f={e:"#e-person",d:"#d-name",p:"#pin-in",i:"#paste-in"}[form];if(f)setTimeout(()=>$(f).focus(),50)}
+function openSheet(title,form){$("#sheetTitle").textContent=title;const P={e:"#eventForm",d:"#diwForm",f:"#adForm",s:"#sendPanel",a:"#apologyForm",p:"#pinForm",i:"#pastePanel",r:"#reviewPanel"};
+  for(const k in P)$(P[k]).hidden=k!==form;overlay.hidden=false;const f={e:"#e-person",d:"#d-name",f:"#a-title",p:"#pin-in",i:"#paste-in"}[form];if(f)setTimeout(()=>$(f).focus(),50)}
 function closeSheet(){overlay.hidden=true}
 overlay.addEventListener("click",e=>{if(e.target===overlay||e.target.hasAttribute("data-close"))closeSheet()});
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("#lightbox").hidden){closePhoto();return}if(!overlay.hidden)closeSheet()});
@@ -559,7 +592,7 @@ async function api(body){const r=await fetch(CONFIG.adminApi,{method:"POST",head
   const t=await r.text();let j;try{j=JSON.parse(t)}catch(x){const m=t.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();const err=new Error("server");err.detail=(m.match(/(Exception|Error|خطأ)[^.]{0,140}/)||[m.slice(0,140)])[0];throw err}
   if(!j.ok){const err=new Error(j.error||"fail");err.code=j.error;if(j.detail)err.detail=j.detail;throw err}return j}
 function applyAdmin(){const on=!!admin.pin;document.querySelectorAll(".admin-only").forEach(x=>x.hidden=!on);$("#adminBar").hidden=!on;$("#adminIn").hidden=on;
-  $("#addEvent").textContent=on?"+ إضافة مناسبة":"أرسل مناسبة";$("#addDiw").textContent=on?"+ إضافة ديوان":"أرسل ديوانك";
+  $("#addEvent").textContent=on?"+ إضافة مناسبة":"أرسل مناسبة";$("#addDiw").textContent=on?"+ إضافة ديوان":"أرسل ديوانك";$("#addAd").textContent=on?"+ إضافة إعلان":"أرسل إعلان";$("#a-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";
   $("#e-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";$("#d-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";
   const ap=$("#apologyForm button[type=submit]");if(ap)ap.textContent=on?"حفظ مباشرة":"متابعة للإرسال";renderDiw()}
 function adminFail(e){if(e&&e.code==="pin"){try{localStorage.removeItem("wafra-admin-pin")}catch(x){}admin.pin=null;applyAdmin();closeSheet();toast("الرمز السري غير صحيح، ادخل مرة أخرى")}
@@ -571,9 +604,51 @@ $("#adminOut").addEventListener("click",()=>{try{localStorage.removeItem("wafra-
 $("#pinForm").addEventListener("submit",async e=>{e.preventDefault();const pin=$("#pin-in").value.trim();if(!pin)return;const btn=$("#pinGo");btn.disabled=true;
   try{admin.pin=pin;await api({action:"check"});try{localStorage.setItem("wafra-admin-pin",pin)}catch(x){}applyAdmin();closeSheet();toast("مرحباً، وضع الإدارة مفعّل")}
   catch(err){admin.pin=null;$("#pinErr").textContent=err.code==="pin"?"الرمز غير صحيح.":"تعذّر الاتصال، حاول مرة أخرى.";$("#pinErr").hidden=false}finally{btn.disabled=false}});
+const listOf=sheet=>sheet==="events"?state.events:sheet==="ads"?state.ads:state.diw;
+const mapRow=(sheet,r)=>sheet==="events"?rowToEvent(r):sheet==="ads"?rowToAd(r):rowToDiw(r);
+const renderAll=()=>{renderEvents();renderDiw();renderAds()};
 async function saveRow(sheet,row){const res=await api({action:"append",sheet,row});const rr=row.slice();rr._row=res.row;
-  if(sheet==="events")state.events.push(rowToEvent(rr));else state.diw.push(rowToDiw(rr));
-  closeSheet();renderEvents();renderDiw();toast("تم الحفظ، يظهر للجميع خلال دقائق")}
+  listOf(sheet).push(mapRow(sheet,rr));closeSheet();renderAll();toast("تم الحفظ، يظهر للجميع خلال دقائق")}
+
+/* ---------- ads (festivals, offers) ---------- */
+const AD_COLS=["العنوان","الجهة","من تاريخ","إلى تاريخ","المكان","الوقت","التفاصيل","رابط","الهاتف","رابط الموقع"];
+const AD_TITLE="طلب إضافة إعلان – دواوين الوفرة";
+const adKey=a=>evKey("ad"+a.startDate,a.title);
+const adLink=a=>SITE+"/a/"+adKey(a);
+function rowToAd(r){const s=normDate(r[2]);let e=normDate(r[3])||s;if(e<s)e=s;
+  return{title:r[0]||"",org:r[1]||"",startDate:s,endDate:e,place:r[4]||"",time:r[5]||"",details:r[6]||"",link:r[7]||"",phone:toLatin(r[8]),mapUrl:r[9]||"",photo:r[10]||"",_row:r._row,raw:Array.from({length:11},(_,k)=>r[k]||"")}}
+function daysBetween(a,b){return Math.round((parse(b)-parse(a))/864e5)}
+function adWhen(a){const t=todayStr();const one=a.startDate===a.endDate;
+  const range=one?fmtLong.format(parse(a.startDate)):"من "+fmtLong.format(parse(a.startDate))+" إلى "+fmtLong.format(parse(a.endDate));
+  let tail="";if(status(a)==="now"){const left=daysBetween(t,a.endDate);tail=left===0?" · آخر يوم اليوم":left===1?" · ينتهي غداً":" · باقي "+(left+1)+" أيام"}
+  else{const until=daysBetween(t,a.startDate);tail=until===1?" · يبدأ غداً":" · يبدأ بعد "+until+" أيام"}return range+tail}
+function adText(a){const L=["📢 "+a.title];if(a.org)L.push("الجهة: "+a.org);L.push("📅 "+adWhen(a).replace(/ · .*/,""));
+  if(a.time)L.push("🕒 "+a.time);if(a.place)L.push("📍 "+a.place);if(a.details)L.push("",a.details,"");
+  if(a.phone)L.push("للتواصل: "+a.phone);if(safeUrl(a.link))L.push(a.link);if(safeUrl(a.mapUrl))L.push("الموقع: "+a.mapUrl);
+  L.push("","📲 التفاصيل في تطبيق دواوين الوفرة:",adLink(a));return L.join("\n")}
+function adCard(a){const st=status(a);const facts=el("dl",{class:"facts"});const add=(k,v,cls)=>{if(!v)return;facts.append(el("dt",{text:k}),el("dd",cls?{class:cls,text:v}:{text:v}))};
+  add("الوقت",a.time);add("المكان",a.place);add("التواصل",a.phone,"mono");
+  return el("article",{class:"dcard",id:"ad-"+adKey(a)},photoEl(a.photo,a.title),
+    el("div",{class:"row"},el("span",{class:"chip "+(st==="now"?"now":"soon"),text:st==="now"?"جارٍ الآن":"قادم"}),a.org?el("span",{class:"chip soft",text:a.org}):null),
+    el("h3",{text:a.title}),el("div",{class:"ad-when",text:adWhen(a)}),facts,a.details?el("div",{class:"ad-details",text:a.details}):null,
+    el("div",{class:"actions"},el("button",{class:"btn sm",type:"button",onclick:()=>shareText(adText(a),a.photo,"إعلان.jpg")},"مشاركة واتساب"),
+      safeUrl(a.link)?el("a",{class:"btn sm",href:a.link,target:"_blank",rel:"noopener"},"الرابط"):null,
+      safeUrl(a.mapUrl)?el("a",{class:"btn sm",href:a.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
+      admin.pin&&a._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("ads",a)},"تعديل"):null))}
+function renderAds(){const out=$("#adOut");out.replaceChildren();const list=state.ads.filter(a=>status(a)!=="past").sort((x,y)=>x.startDate.localeCompare(y.startDate));
+  $("#nAds").textContent=list.length;
+  if(!state.loaded.a){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل الإعلانات…"})));return}
+  if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:"لا توجد إعلانات حالياً"}),"للإعلان عن مهرجان أو فعالية أو عرض في المنطقة، اضغط «أرسل إعلان»."));return}
+  const now=list.filter(a=>status(a)==="now"),soon=list.filter(a=>status(a)==="soon");
+  const group=(t,arr)=>{if(arr.length)out.append(el("div",{class:"group"},el("h2",{text:t}),el("div",{class:"list"},...arr.map(adCard))))};
+  group("جارية الآن",now);group("قادمة",soon)}
+$("#addAd").addEventListener("click",()=>{$("#adForm").reset();openSheet(admin.pin?"إعلان جديد":"أرسل إعلان","f")});
+$("#adForm").addEventListener("submit",async e=>{e.preventDefault();backTo="f";const g=f=>$("#a-"+f).value.trim();
+  let start=g("start"),end=g("end")||start;if(end<start)end=start;
+  const row=[g("title"),g("org"),start,end,g("place"),g("time"),g("details"),g("link"),g("phone"),g("map")];
+  if(admin.pin&&state.ads.some(x=>x.title.trim()===row[0]&&x.startDate===start)){closeSheet();setNote("إعلان «"+row[0]+"» مسجّل مسبقاً بنفس التاريخ. لتغييره استخدم زر «تعديل».");toast("الإعلان موجود مسبقاً");return}
+  if(admin.pin){const b=$("#a-save");b.disabled=true;try{row.push(await photoFrom($("#a-file"),g("photo")));await saveRow("ads",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
+  showSend(linesFor(AD_TITLE,AD_COLS,row).concat(["","يمكنك إرسال صورة الإعلان بعد هذه الرسالة."]))});
 
 function shrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const im=new Image();
   im.onload=()=>{const max=1280;let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
@@ -597,7 +672,7 @@ $("#diwForm").addEventListener("submit",async e=>{e.preventDefault();backTo="d";
   if(admin.pin){const b=$("#d-save");b.disabled=true;try{row.push("","",await photoFrom($("#d-file"),g("photo")),await photoFrom($("#d-logofile"),""));await saveRow("diwaniyas",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
   showSend(linesFor(DIW_TITLE,DIW_COLS,row))});
 $("#sendCopy").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(lastSend);toast("تم النسخ")}catch(e){const r=document.createRange();r.selectNodeContents($("#sendText"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("النص محدد، انسخه يدوياً")}});
-$("#sendBack").addEventListener("click",()=>openSheet(backTo==="e"?"أرسل مناسبة":backTo==="a"?"اعتذار عن الاستقبال":"أرسل ديوانك",backTo));
+$("#sendBack").addEventListener("click",()=>openSheet(backTo==="e"?"أرسل مناسبة":backTo==="a"?"اعتذار عن الاستقبال":backTo==="f"?"أرسل إعلان":"أرسل ديوانك",backTo));
 $("#sendLink").addEventListener("click",()=>setTimeout(()=>{closeSheet();toast("شكراً، سيُضاف بعد المراجعة")},400));
 
 /* ---------- apology ---------- */
@@ -620,53 +695,57 @@ $("#apologyForm").addEventListener("submit",async e=>{e.preventDefault();backTo=
 /* ---------- paste a WhatsApp request (admin) ---------- */
 let pending=null;
 function openPaste(){$("#paste-in").value="";$("#pasteErr").hidden=true;openSheet("لصق طلب من واتساب","i")}
-$("#pasteEvent").addEventListener("click",openPaste);$("#pasteDiw").addEventListener("click",openPaste);
+$("#pasteEvent").addEventListener("click",openPaste);$("#pasteAd").addEventListener("click",openPaste);$("#pasteDiw").addEventListener("click",openPaste);
 function readPairs(text){const m={};text.split(/\r?\n/).forEach(l=>{const i=l.indexOf(":");if(i>0)m[l.slice(0,i).replace(/[*_]/g,"").trim()]=l.slice(i+1).trim()});return m}
 $("#pasteGo").addEventListener("click",()=>{const t=$("#paste-in").value;const kv=readPairs(t);let kind=null,cols=null,note="";
   if(/طلب إلغاء اعتذار/.test(t)&&kv["اسم الديوان"])kind="cancel";
   else if(/طلب اعتذار/.test(t)&&kv["اسم الديوان"])kind="apology";
   else if(/طلب إضافة مناسبة/.test(t)&&kv["الاسم"]){kind="events";cols=EV_COLS}
   else if(/طلب إضافة ديوان/.test(t)&&kv["اسم الديوان"]){kind="diwaniyas";cols=DIW_COLS}
+  else if(/طلب إضافة إعلان/.test(t)&&kv["العنوان"]){kind="ads";cols=AD_COLS}
   if(!kind){$("#pasteErr").hidden=false;return}
   const box=$("#reviewFields");box.replaceChildren();const add=(label,val,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:label}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف/.test(label)?"ltr":"auto"}),{value:val||""}))};
-  if(kind==="events"||kind==="diwaniyas"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
+  if(kind==="events"||kind==="diwaniyas"||kind==="ads"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":kind==="ads"?"طلب إعلان. راجع البيانات، والتواريخ بصيغة 2026-11-06، ويمكنك اختيار صورة الإعلان.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
   else{add("اسم الديوان",kv["اسم الديوان"],0);
     if(kind==="apology"){const v=kv["اعتذار"]||"";const dt=(toLatin(v).match(/\d{4}-\d{2}-\d{2}/)||[""])[0];add("اعتذار",/متوقف/.test(v)?"متوقف":dt,1);add("سبب الاعتذار",kv["سبب الاعتذار"],2);note="طلب اعتذار. اكتب التاريخ بصيغة 2026-11-06 أو كلمة متوقف."}
     else note="طلب إلغاء اعتذار: سيُمسح الاعتذار ويعود الديوان طبيعياً."}
-  pending=kind;$("#reviewDel").hidden=true;$("#delConfirm").hidden=true;$("#rv-file").value="";$("#rv-logo").value="";$("#rv-logoRow").hidden=kind!=="diwaniyas";$("#rv-file").closest(".field").hidden=!(kind==="events"||kind==="diwaniyas");$("#reviewNote").textContent=note;openSheet("مراجعة الطلب","r")});
+  pending=kind;$("#reviewDel").hidden=true;$("#delConfirm").hidden=true;$("#rv-file").value="";$("#rv-logo").value="";$("#rv-logoRow").hidden=kind!=="diwaniyas";$("#rv-file").closest(".field").hidden=!(kind==="events"||kind==="diwaniyas"||kind==="ads");$("#reviewNote").textContent=note;openSheet("مراجعة الطلب","r")});
 let editing=null;
 const DIW_EDIT=DIW_COLS.concat(["اعتذار","سبب الاعتذار","رابط الصورة","رابط الشعار"]),EV_EDIT=EV_COLS.concat(["رابط الصورة"]);
-function openEdit(sheet,rec){editing={sheet,rec};pending="edit";const cols=sheet==="events"?EV_EDIT:DIW_EDIT;const box=$("#reviewFields");box.replaceChildren();
+const AD_EDIT=AD_COLS.concat(["رابط الصورة"]);const colsOf=sheet=>sheet==="events"?EV_EDIT:sheet==="ads"?AD_EDIT:DIW_EDIT;
+function openEdit(sheet,rec){editing={sheet,rec};pending="edit";const cols=colsOf(sheet);const box=$("#reviewFields");box.replaceChildren();
   cols.forEach((c,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:c}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف|اعتذار$/.test(c)?"ltr":"auto"}),{value:(rec.raw&&rec.raw[i])||""}))});
   $("#rv-file").value="";$("#rv-file").closest(".field").hidden=false;$("#rv-logo").value="";$("#rv-logoRow").hidden=sheet!=="diwaniyas";$("#reviewDel").hidden=false;$("#delConfirm").hidden=true;
-  $("#reviewNote").textContent=sheet==="events"?"عدّل ما تريد ثم اضغط حفظ. التواريخ بصيغة 2026-11-06، والنوع «عزاء» أو «فرح».":"عدّل ما تريد ثم اضغط حفظ. الأيام مفصولة بفاصلة أو «يومياً»، والاعتذار تاريخ أو «متوقف».";
-  openSheet(sheet==="events"?"تعديل المناسبة":"تعديل الديوان","r")}
+  $("#reviewNote").textContent=sheet==="events"?"عدّل ما تريد ثم اضغط حفظ. التواريخ بصيغة 2026-11-06، والنوع «عزاء» أو «فرح».":sheet==="ads"?"عدّل ما تريد ثم اضغط حفظ. التواريخ بصيغة 2026-11-06.":"عدّل ما تريد ثم اضغط حفظ. الأيام مفصولة بفاصلة أو «يومياً»، والاعتذار تاريخ أو «متوقف».";
+  openSheet(sheet==="events"?"تعديل المناسبة":sheet==="ads"?"تعديل الإعلان":"تعديل الديوان","r")}
 function keyOf(sheet,rec){return sheet==="events"?rec.raw[1]:rec.raw[0]}
 function changedErr(err){if(err&&err.code==="changed"){toast("تغيّر الجدول منذ فتح الصفحة، حدّث الصفحة ثم حاول");return true}return false}
 $("#reviewDel").addEventListener("click",()=>{$("#delConfirm").hidden=false});
 $("#delNo").addEventListener("click",()=>{$("#delConfirm").hidden=true});
 $("#delYes").addEventListener("click",async()=>{if(!editing)return;const {sheet,rec}=editing;const b=$("#delYes");b.disabled=true;
-  try{await api({action:"delete",sheet,rowNum:rec._row,expect:keyOf(sheet,rec)});const list=sheet==="events"?state.events:state.diw;const k=list.indexOf(rec);if(k>=0)list.splice(k,1);
-    [state.events,state.diw].forEach(L=>{if(L===list)L.forEach(x=>{if(x._row>rec._row)x._row--})});closeSheet();renderEvents();renderDiw();toast("تم الحذف")}
+  try{await api({action:"delete",sheet,rowNum:rec._row,expect:keyOf(sheet,rec)});const list=listOf(sheet);const k=list.indexOf(rec);if(k>=0)list.splice(k,1);
+    list.forEach(x=>{if(x._row>rec._row)x._row--});closeSheet();renderAll();toast("تم الحذف")}
   catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
 $("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFields").querySelectorAll("input")].map(x=>x.value.trim());const b=$("#reviewSave");b.disabled=true;
-  try{if(pending==="edit"){const {sheet,rec}=editing;const row=vals.slice();const cols=sheet==="events"?EV_EDIT:DIW_EDIT;const pi=cols.indexOf("رابط الصورة");row[pi]=await photoFrom($("#rv-file"),row[pi]);
+  try{if(pending==="edit"){const {sheet,rec}=editing;const row=vals.slice();const cols=colsOf(sheet);const pi=cols.indexOf("رابط الصورة");row[pi]=await photoFrom($("#rv-file"),row[pi]);
       const li=cols.indexOf("رابط الشعار");if(li>=0)row[li]=await photoFrom($("#rv-logo"),row[li]);
       if(sheet==="events"){row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4]}
+      if(sheet==="ads"){row[2]=normDate(row[2])||row[2];row[3]=normDate(row[3])||row[3]}
       await api({action:"update",sheet,rowNum:rec._row,expect:keyOf(sheet,rec),row});const rr=row.slice();rr._row=rec._row;
-      const list=sheet==="events"?state.events:state.diw;const k=list.indexOf(rec);const nr=sheet==="events"?rowToEvent(rr):rowToDiw(rr);if(k>=0)list[k]=nr;
-      closeSheet();renderEvents();renderDiw();toast("تم حفظ التعديل")}
+      const list=listOf(sheet);const k=list.indexOf(rec);if(k>=0)list[k]=mapRow(sheet,rr);
+      closeSheet();renderAll();toast("تم حفظ التعديل")}
     else if(pending==="events"){const row=vals.slice(0,13);row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4];row.push(await photoFrom($("#rv-file"),vals[13]));await saveRow("events",row)}
     else if(pending==="diwaniyas"){const row=vals.slice(0,9);row.push("","",await photoFrom($("#rv-file"),vals[9]),await photoFrom($("#rv-logo"),""));await saveRow("diwaniyas",row)}
+    else if(pending==="ads"){const row=vals.slice(0,10);row[2]=normDate(row[2])||row[2];row[3]=normDate(row[3])||row[2];row.push(await photoFrom($("#rv-file"),vals[10]));await saveRow("ads",row)}
     else if(pending==="apology"){const v=vals[1];await saveApology(vals[0],/متوقف/.test(v)?"pause":"date",normDate(v),vals[2])}
     else await saveApology(vals[0],"cancel","","")}
   catch(err){if(err.code==="notfound")toast("لم أجد ديواناً بهذا الاسم في الجدول");else if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
 
 /* ---------- tabs ---------- */
-function showTab(t){state.tab=t;$("#tab-events").setAttribute("aria-selected",String(t==="events"));$("#tab-diwaniyas").setAttribute("aria-selected",String(t==="diwaniyas"));$("#view-events").hidden=t!=="events";$("#view-diwaniyas").hidden=t!=="diwaniyas"}
-$("#tab-events").addEventListener("click",()=>{location.hash="events"});$("#tab-diwaniyas").addEventListener("click",()=>{location.hash="diwaniyas"});
-const fromHash=()=>{showTab(/^#(diwaniyas|dw-)/.test(location.hash)?"diwaniyas":"events");focusEv()};
-function focusEv(){const h=location.hash;if(!/^#(ev|dw)-/.test(h))return;const c=document.getElementById(h.slice(1));if(c){c.scrollIntoView({block:"center"});c.classList.add("focus")}}window.addEventListener("hashchange",fromHash);fromHash();
+function showTab(t){state.tab=t;["events","diwaniyas","ads"].forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",String(t===k));$("#view-"+k).hidden=t!==k})}
+$("#tab-events").addEventListener("click",()=>{location.hash="events"});$("#tab-ads").addEventListener("click",()=>{location.hash="ads"});$("#tab-diwaniyas").addEventListener("click",()=>{location.hash="diwaniyas"});
+const fromHash=()=>{const h=location.hash;showTab(/^#(diwaniyas|dw-)/.test(h)?"diwaniyas":/^#(ads|ad-)/.test(h)?"ads":"events");focusEv()};
+function focusEv(){const h=location.hash;if(!/^#(ev|dw|ad)-/.test(h))return;const c=document.getElementById(h.slice(1));if(c){c.scrollIntoView({block:"center"});c.classList.add("focus")}}window.addEventListener("hashchange",fromHash);fromHash();
 document.querySelectorAll("#view-events .seg button").forEach(b=>b.addEventListener("click",()=>{state.filter=b.dataset.f;document.querySelectorAll("#view-events .seg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));renderEvents()}));
 $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("change",renderDiw);
 
@@ -674,21 +753,22 @@ $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("ch
 function rowToDiw(r){return{name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),street:r[3]||"",days:parseDays(r[4]),hours:r[5]||"",phone:toLatin(r[6]),mapUrl:r[7]||"",notes:r[8]||"",...parseApology(r[9],r[10]),photo:r[11]||"",logo:r[12]||"",_row:r._row,raw:Array.from({length:13},(_,k)=>r[k]||"")}}
 function rowToEvent(r){const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
   return{kind:/عزا/.test(r[0]||"")?"condolence":"wedding",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||"",_row:r._row,raw:Array.from({length:14},(_,k)=>r[k]||"")}}
-applyAdmin();renderEvents();renderDiw();
+state.ads=[];state.loaded.a=false;applyAdmin();renderAll();
 async function loadLive(){if(!apiReady())throw new Error("no api");const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),9000);
   try{const r=await fetch(CONFIG.adminApi+"?t="+Date.now(),{signal:ctl.signal});const j=JSON.parse(await r.text());if(!j.ok)throw new Error("bad");
     const rows=list=>list.map(x=>{const r=x.v.map(v=>String(v==null?"":v).trim());r._row=x.row;return r}).filter(r=>r.some(Boolean));
-    return{diw:rows(j.diwaniyas||[]),ev:rows(j.events||[])}}finally{clearTimeout(t)}}
+    return{diw:rows(j.diwaniyas||[]),ev:rows(j.events||[]),ads:rows(j.ads||[])}}finally{clearTimeout(t)}}
 function useRows(diwRows,evRows){state.diw=diwRows.map(rowToDiw).filter(d=>d.name);
   const bad=[];state.events=evRows.map(r=>{const e=rowToEvent(r);if(!(e.person&&e.startDate))bad.push(r._row);return e}).filter(e=>e.person&&e.startDate);
   state.badRows=bad}
+function useAds(rows){state.ads=(rows||[]).map(rowToAd).filter(a=>a.title&&a.startDate)}
 function adminChecks(){if(!admin.pin||!state.badRows||!state.badRows.length)return;
   setNote("صفوف في ورقة المناسبات لا تظهر لأن الاسم أو التاريخ ناقص أو بصيغة غير مفهومة: الصف "+state.badRows.join("، ")+". افتح الجدول وصحّح التاريخ بصيغة 2026-11-06.")}
-loadLive().then(d=>{state.src="live";useRows(d.diw,d.ev)})
+loadLive().then(d=>{state.src="live";useRows(d.diw,d.ev);useAds(d.ads)})
   .catch(()=>Promise.all([loadCsv(CONFIG.diwaniyasCsv),loadCsv(CONFIG.eventsCsv)]).then(([dr,er])=>{state.src="csv";useRows(dr,er)}))
   .catch(()=>setNote("تعذّر تحميل البيانات حالياً، حاول لاحقاً."))
-  .finally(()=>{state.loaded.d=state.loaded.e=true;renderDiw();renderEvents();focusEv();adminChecks()});
-setInterval(renderEvents,60000);
+  .finally(()=>{state.loaded.d=state.loaded.e=state.loaded.a=true;renderAll();focusEv();adminChecks()});
+setInterval(()=>{renderEvents();renderAds()},60000);
 })();
 </script>
 </body>
