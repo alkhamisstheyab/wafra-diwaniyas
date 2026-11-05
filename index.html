@@ -432,7 +432,7 @@ const evLink=ev=>SITE+"/e/"+evKey(ev.startDate,ev.person);
 function driveId(u){const m=String(u||"").match(/(?:\/file\/d\/|[?&]id=)([\w-]{20,})/);return m?m[1]:null}
 const dwKey=d=>evKey("dw",d.name);
 const dwLink=d=>SITE+"/d/"+dwKey(d);
-function diwInvite(d){const L=["☕ دعوة لزيارة "+d.name];
+function diwInvite(d){const L=["☕ حياكم ب"+d.name];
   if(d.owner)L.push("صاحب الديوان: "+d.owner);
   const addr=[d.block?"قطعة "+d.block:"",d.street].filter(Boolean).join(" · ");L.push("المكان: مدينة الوفرة السكنية"+(addr?" · "+addr:""));
   if(d.days.length)L.push("أيام الاستقبال: "+(d.days.length===7?"يومياً":[...d.days].sort((a,b)=>a-b).map(i=>DAYS[i]).join("، ")));

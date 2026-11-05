@@ -40,7 +40,7 @@ export async function onRequestGet({ params, request }) {
     const rows = csv(await r.text()).slice(1);
     for (const x of rows) {
       if (!x[0] || evKey("dw", x[0]) !== id) continue;
-      title = "دعوة لزيارة " + x[0];
+      title = "حياكم ب" + x[0];
       desc = [x[4] ? "أيام الاستقبال: " + x[4] : "", x[5]].filter(Boolean).join(" · ") || desc;
       const m = String(x[11] || x[12] || "").match(/(?:\/file\/d\/|[?&]id=)([\w-]{20,})/);
       if (m) image = origin + "/img?id=" + m[1];
