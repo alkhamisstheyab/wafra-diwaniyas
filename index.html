@@ -326,7 +326,8 @@ form{display:flex;flex-direction:column;gap:12px}
     <form id="adForm" hidden>
       <div class="field"><label for="a-title">عنوان الإعلان</label><input id="a-title" required placeholder="مثال: مهرجان البر"></div>
       <div class="field"><label for="a-org">الجهة المنظمة</label><input id="a-org" placeholder="مثال: جمعية الوفرة التعاونية"></div>
-      <div class="two">
+      <label class="check" style="color:var(--ink)"><input type="checkbox" id="a-perm"> إعلان دائم بدون مدة (مثل صيدلية أو مطعم أو محل)</label>
+      <div class="two" id="a-dates">
         <div class="field"><label for="a-start">من تاريخ</label><input id="a-start" type="date" required></div>
         <div class="field"><label for="a-end">إلى تاريخ</label><input id="a-end" type="date"></div>
       </div>
@@ -648,38 +649,42 @@ const AD_COLS=["العنوان","الجهة","من تاريخ","إلى تاري�
 const AD_TITLE="طلب إضافة إعلان – دواوين الوفرة";
 const adKey=a=>evKey("ad"+a.startDate,a.title);
 const adLink=a=>SITE+"/a/"+adKey(a);
-function rowToAd(r){const s=normDate(r[2]);let e=normDate(r[3])||s;if(e<s)e=s;
-  return{title:r[0]||"",org:r[1]||"",startDate:s,endDate:e,place:r[4]||"",time:r[5]||"",details:r[6]||"",link:r[7]||"",phone:toLatin(r[8]),mapUrl:r[9]||"",photo:r[10]||"",_row:r._row,raw:Array.from({length:11},(_,k)=>r[k]||"")}}
+const isPerm=v=>/دائم/.test(String(v||""));
+function rowToAd(r){const perm=isPerm(r[3])||isPerm(r[2]);const s=normDate(r[2])||(perm?"2000-01-01":"");let e=perm?"9999-12-31":(normDate(r[3])||s);if(e<s)e=s;
+  return{perm,title:r[0]||"",org:r[1]||"",startDate:s,endDate:e,place:r[4]||"",time:r[5]||"",details:r[6]||"",link:r[7]||"",phone:toLatin(r[8]),mapUrl:r[9]||"",photo:r[10]||"",_row:r._row,raw:Array.from({length:11},(_,k)=>r[k]||"")}}
 function daysBetween(a,b){return Math.round((parse(b)-parse(a))/864e5)}
-function adWhen(a){const t=todayStr();const one=a.startDate===a.endDate;
+const dayWord=n=>n===2?"يومين":n<=10?n+" أيام":n+" يوماً";
+function adWhen(a){if(a.perm)return"إعلان دائم";const t=todayStr();const one=a.startDate===a.endDate;
   const range=one?fmtLong.format(parse(a.startDate)):"من "+fmtLong.format(parse(a.startDate))+" إلى "+fmtLong.format(parse(a.endDate));
-  let tail="";if(status(a)==="now"){const left=daysBetween(t,a.endDate);tail=left===0?" · آخر يوم اليوم":left===1?" · ينتهي غداً":" · باقي "+(left+1)+" أيام"}
-  else{const until=daysBetween(t,a.startDate);tail=until===1?" · يبدأ غداً":" · يبدأ بعد "+until+" أيام"}return range+tail}
-function adText(a){const L=["📢 "+a.title];if(a.org)L.push("الجهة: "+a.org);L.push("📅 "+adWhen(a).replace(/ · .*/,""));
+  let tail="";if(status(a)==="now"){const left=daysBetween(t,a.endDate);tail=left===0?" · آخر يوم اليوم":left===1?" · ينتهي غداً":" · باقي "+dayWord(left+1)}
+  else{const until=daysBetween(t,a.startDate);tail=until===1?" · يبدأ غداً":" · يبدأ بعد "+dayWord(until)}return range+tail}
+function adText(a){const L=["📢 "+a.title];if(a.org)L.push("الجهة: "+a.org);if(!a.perm)L.push("📅 "+adWhen(a).replace(/ · .*/,""));
   if(a.time)L.push("🕒 "+a.time);if(a.place)L.push("📍 "+a.place);if(a.details)L.push("",a.details,"");
   if(a.phone)L.push("للتواصل: "+a.phone);if(safeUrl(a.link))L.push(a.link);if(safeUrl(a.mapUrl))L.push("الموقع: "+a.mapUrl);
   L.push("","📲 التفاصيل في تطبيق دواوين الوفرة:",adLink(a));return L.join("\n")}
 function adCard(a){const st=status(a);const facts=el("dl",{class:"facts"});const add=(k,v,cls)=>{if(!v)return;facts.append(el("dt",{text:k}),el("dd",cls?{class:cls,text:v}:{text:v}))};
   add("الوقت",a.time);add("المكان",a.place);add("التواصل",a.phone,"mono");
   return el("article",{class:"dcard",id:"ad-"+adKey(a)},photoEl(a.photo,a.title),
-    el("div",{class:"row"},el("span",{class:"chip "+(st==="now"?"now":"soon"),text:st==="now"?"جارٍ الآن":"قادم"}),a.org?el("span",{class:"chip soft",text:a.org}):null),
-    el("h3",{text:a.title}),el("div",{class:"ad-when",text:adWhen(a)}),facts,a.details?el("div",{class:"ad-details",text:a.details}):null,
+    el("div",{class:"row"},el("span",{class:"chip "+(a.perm||st==="now"?"now":"soon"),text:a.perm?"دائم":st==="now"?"جارٍ الآن":"قادم"}),a.org?el("span",{class:"chip soft",text:a.org}):null),
+    el("h3",{text:a.title}),a.perm?null:el("div",{class:"ad-when",text:adWhen(a)}),facts,a.details?el("div",{class:"ad-details",text:a.details}):null,
     el("div",{class:"actions"},el("button",{class:"btn sm",type:"button",onclick:()=>shareText(adText(a),a.photo,"إعلان.jpg")},"مشاركة واتساب"),
       safeUrl(a.link)?el("a",{class:"btn sm",href:a.link,target:"_blank",rel:"noopener"},"الرابط"):null,
       safeUrl(a.mapUrl)?el("a",{class:"btn sm",href:a.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
       admin.pin&&a._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("ads",a)},"تعديل"):null))}
-function renderAds(){const out=$("#adOut");out.replaceChildren();const list=state.ads.filter(a=>status(a)!=="past").sort((x,y)=>x.startDate.localeCompare(y.startDate));
+function renderAds(){const out=$("#adOut");out.replaceChildren();const list=state.ads.filter(a=>a.perm||status(a)!=="past").sort((x,y)=>x.startDate.localeCompare(y.startDate));
   $("#nAds").textContent=list.length;
   if(!state.loaded.a){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل الإعلانات…"})));return}
-  if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:"لا توجد إعلانات حالياً"}),"للإعلان عن مهرجان أو فعالية أو عرض في المنطقة، اضغط «أرسل إعلان»."));return}
-  const now=list.filter(a=>status(a)==="now"),soon=list.filter(a=>status(a)==="soon");
+  if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:"لا توجد إعلانات حالياً"}),"للإعلان عن مهرجان أو عرض، أو عن محل دائم مثل صيدلية أو مطعم، اضغط «أرسل إعلان»."));return}
+  const now=list.filter(a=>!a.perm&&status(a)==="now"),soon=list.filter(a=>!a.perm&&status(a)==="soon"),perm=list.filter(a=>a.perm).sort((x,y)=>x.title.localeCompare(y.title,"ar"));
   const group=(t,arr)=>{if(arr.length)out.append(el("div",{class:"group"},el("h2",{text:t}),el("div",{class:"list"},...arr.map(adCard))))};
-  group("جارية الآن",now);group("قادمة",soon)}
-$("#addAd").addEventListener("click",()=>{$("#adForm").reset();openSheet(admin.pin?"إعلان جديد":"أرسل إعلان","f")});
+  group("جارية الآن",now);group("قادمة",soon);group("إعلانات دائمة",perm)}
+$("#a-perm").addEventListener("change",syncPerm);
+function syncPerm(){const on=$("#a-perm").checked;$("#a-dates").hidden=on;$("#a-start").required=!on}
+$("#addAd").addEventListener("click",()=>{$("#adForm").reset();syncPerm();openSheet(admin.pin?"إعلان جديد":"أرسل إعلان","f")});
 $("#adForm").addEventListener("submit",async e=>{e.preventDefault();backTo="f";const g=f=>$("#a-"+f).value.trim();
-  let start=g("start"),end=g("end")||start;if(end<start)end=start;
+  const perm=$("#a-perm").checked;let start=perm?todayStr():g("start"),end=perm?"دائم":(g("end")||start);if(!perm&&end<start)end=start;
   const row=[g("title"),g("org"),start,end,g("place"),g("time"),g("details"),g("link"),g("phone"),g("map")];
-  if(admin.pin&&state.ads.some(x=>x.title.trim()===row[0]&&x.startDate===start)){closeSheet();setNote("إعلان «"+row[0]+"» مسجّل مسبقاً بنفس التاريخ. لتغييره استخدم زر «تعديل».");toast("الإعلان موجود مسبقاً");return}
+  if(admin.pin&&state.ads.some(x=>x.title.trim()===row[0]&&(perm?x.perm:x.startDate===start))){closeSheet();setNote("إعلان «"+row[0]+"» مسجّل مسبقاً بنفس التاريخ. لتغييره استخدم زر «تعديل».");toast("الإعلان موجود مسبقاً");return}
   if(admin.pin){const b=$("#a-save");b.disabled=true;try{row.push(await photoFrom($("#a-file"),g("photo")));await saveRow("ads",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
   showSend(linesFor(AD_TITLE,AD_COLS,row).concat(["","يمكنك إرسال صورة الإعلان بعد هذه الرسالة."]))});
 
@@ -781,7 +786,7 @@ $("#pasteGo").addEventListener("click",()=>{const t=$("#paste-in").value;const k
   else if(/طلب إضافة خدمة/.test(t)&&kv["الاسم"]&&kv["الهاتف"]){kind="services";cols=SV_COLS}
   if(!kind){$("#pasteErr").hidden=false;return}
   const box=$("#reviewFields");box.replaceChildren();const add=(label,val,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:label}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف/.test(label)?"ltr":"auto"}),{value:val||""}))};
-  if(kind==="events"||kind==="diwaniyas"||kind==="ads"||kind==="services"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":kind==="ads"?"طلب إعلان. راجع البيانات، والتواريخ بصيغة 2026-11-06، ويمكنك اختيار صورة الإعلان.":kind==="services"?"طلب خدمة. راجع الاسم والمهنة والرقم قبل الحفظ.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
+  if(kind==="events"||kind==="diwaniyas"||kind==="ads"||kind==="services"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":kind==="ads"?"طلب إعلان. راجع البيانات، والتواريخ بصيغة 2026-11-06 أو «دائم» في «إلى تاريخ»، ويمكنك اختيار صورة الإعلان.":kind==="services"?"طلب خدمة. راجع الاسم والمهنة والرقم قبل الحفظ.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
   else{add("اسم الديوان",kv["اسم الديوان"],0);
     if(kind==="apology"){const v=kv["اعتذار"]||"";const dt=(toLatin(v).match(/\d{4}-\d{2}-\d{2}/)||[""])[0];add("اعتذار",/متوقف/.test(v)?"متوقف":dt,1);add("سبب الاعتذار",kv["سبب الاعتذار"],2);note="طلب اعتذار. اكتب التاريخ بصيغة 2026-11-06 أو كلمة متوقف."}
     else note="طلب إلغاء اعتذار: سيُمسح الاعتذار ويعود الديوان طبيعياً."}
@@ -792,7 +797,7 @@ const AD_EDIT=AD_COLS.concat(["رابط الصورة"]),SV_EDIT=SV_COLS.concat([
 function openEdit(sheet,rec){editing={sheet,rec};pending="edit";const cols=colsOf(sheet);const box=$("#reviewFields");box.replaceChildren();
   cols.forEach((c,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:c}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف|اعتذار$/.test(c)?"ltr":"auto"}),{value:(rec.raw&&rec.raw[i])||""}))});
   $("#rv-file").value="";$("#rv-file").closest(".field").hidden=false;$("#rv-logo").value="";$("#rv-logoRow").hidden=sheet!=="diwaniyas";$("#reviewDel").hidden=false;$("#delConfirm").hidden=true;
-  $("#reviewNote").textContent=sheet==="events"?"عدّل ما تريد ثم اضغط حفظ. التواريخ بصيغة 2026-11-06، والنوع «عزاء» أو «فرح».":sheet==="ads"?"عدّل ما تريد ثم اضغط حفظ. التواريخ بصيغة 2026-11-06.":sheet==="services"?"عدّل ما تريد ثم اضغط حفظ.":"عدّل ما تريد ثم اضغط حفظ. الأيام مفصولة بفاصلة أو «يومياً»، والاعتذار تاريخ أو «متوقف».";
+  $("#reviewNote").textContent=sheet==="events"?"عدّل ما تريد ثم اضغط حفظ. التواريخ بصيغة 2026-11-06، والنوع «عزاء» أو «فرح».":sheet==="ads"?"عدّل ما تريد ثم اضغط حفظ. التواريخ بصيغة 2026-11-06، ولإعلان دائم اكتب «دائم» في «إلى تاريخ».":sheet==="services"?"عدّل ما تريد ثم اضغط حفظ.":"عدّل ما تريد ثم اضغط حفظ. الأيام مفصولة بفاصلة أو «يومياً»، والاعتذار تاريخ أو «متوقف».";
   openSheet(sheet==="events"?"تعديل المناسبة":sheet==="ads"?"تعديل الإعلان":sheet==="services"?"تعديل الخدمة":"تعديل الديوان","r")}
 function keyOf(sheet,rec){return sheet==="events"?rec.raw[1]:rec.raw[0]}
 function changedErr(err){if(err&&err.code==="changed"){toast("تغيّر الجدول منذ فتح الصفحة، حدّث الصفحة ثم حاول");return true}return false}
@@ -806,14 +811,14 @@ $("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFie
   try{if(pending==="edit"){const {sheet,rec}=editing;const row=vals.slice();const cols=colsOf(sheet);const pi=cols.indexOf("رابط الصورة");row[pi]=await photoFrom($("#rv-file"),row[pi]);
       const li=cols.indexOf("رابط الشعار");if(li>=0)row[li]=await photoFrom($("#rv-logo"),row[li]);
       if(sheet==="events"){row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4]}
-      if(sheet==="ads"){row[2]=normDate(row[2])||row[2];row[3]=normDate(row[3])||row[3]}
+      if(sheet==="ads"){row[2]=normDate(row[2])||row[2];row[3]=isPerm(row[3])?"دائم":(normDate(row[3])||row[3])}
       await api({action:"update",sheet,rowNum:rec._row,expect:keyOf(sheet,rec),row,...meta(sheet)});const rr=row.slice();rr._row=rec._row;
       const list=listOf(sheet);const k=list.indexOf(rec);if(k>=0)list[k]=mapRow(sheet,rr);
       closeSheet();renderAll();toast("تم حفظ التعديل")}
     else if(pending==="events"){const row=vals.slice(0,13);row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4];row.push(await photoFrom($("#rv-file"),vals[13]));await saveRow("events",row)}
     else if(pending==="diwaniyas"){const row=vals.slice(0,9);row.push("","",await photoFrom($("#rv-file"),vals[9]),await photoFrom($("#rv-logo"),""));await saveRow("diwaniyas",row)}
     else if(pending==="services"){const row=vals.slice(0,6);row[2]=toLatin(row[2]).replace(/[^\d+]/g,"");row.push(await photoFrom($("#rv-file"),vals[6]));await saveRow("services",row)}
-    else if(pending==="ads"){const row=vals.slice(0,10);row[2]=normDate(row[2])||row[2];row[3]=normDate(row[3])||row[2];row.push(await photoFrom($("#rv-file"),vals[10]));await saveRow("ads",row)}
+    else if(pending==="ads"){const row=vals.slice(0,10);row[2]=normDate(row[2])||row[2];row[3]=isPerm(row[3])?"دائم":(normDate(row[3])||row[2]);if(!row[2])row[2]=todayStr();row.push(await photoFrom($("#rv-file"),vals[10]));await saveRow("ads",row)}
     else if(pending==="apology"){const v=vals[1];await saveApology(vals[0],/متوقف/.test(v)?"pause":"date",normDate(v),vals[2])}
     else await saveApology(vals[0],"cancel","","")}
   catch(err){if(err.code==="notfound")toast("لم أجد ديواناً بهذا الاسم في الجدول");else if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
