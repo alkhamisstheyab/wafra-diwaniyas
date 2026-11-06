@@ -632,7 +632,7 @@ async function loadStats(){const box=$("#adminStats");if(!admin.pin){box.hidden=
   try{const j=await api({action:"stats"});const week=j.days.reduce((a,x)=>a+x.n,0);const today=j.days[j.days.length-1].n;
     const short=d=>{try{return new Intl.DateTimeFormat("ar-KW-u-nu-latn",{weekday:"short"}).format(parse(d))}catch(e){return d.slice(5)}};
     box.replaceChildren("👁️ الزيارات: اليوم "+today+" · آخر 7 أيام "+week+" · الإجمالي "+j.views+" · أجهزة مختلفة "+j.devices,
-      el("div",{class:"stat-days"},...j.days.map(x=>el("span",{text:short(x.d)+" "+x.n}))));box.hidden=false}catch(e){box.hidden=true}}
+      el("div",{class:"stat-days"},...j.days.map(x=>el("span",{text:short(x.d)+" "+x.n}))));box.hidden=false}catch(e){box.textContent="👁️ العدّاد لا يعمل بعد ("+((e&&(e.code||e.detail||e.message))||"خطأ")+"). تأكد من تحديث كود الجدول ونشر نسخة جديدة.";box.hidden=false}}
 function adminFail(e){if(e&&e.code==="pin"){try{localStorage.removeItem("wafra-admin-pin")}catch(x){}admin.pin=null;applyAdmin();closeSheet();toast("الرمز السري غير صحيح، ادخل مرة أخرى")}
   else if(e&&e.message==="img")toast("تعذّر قراءة الصورة، جرّب صورة أخرى");else if(e&&e.detail){setNote("تعذّر الحفظ. رسالة الجدول: "+e.detail);closeSheet();toast("تعذّر الحفظ، انظر الملاحظة أعلى الصفحة")}
   else if(e&&/Load failed|Failed to fetch|NetworkError/i.test(e.message||"")){setNote("تعذّر الحفظ: لم يصل رد من الجدول. إن كان مع صورة، جرّب صورة أصغر أو أعد نشر الكود.");toast("تعذّر الحفظ")}
