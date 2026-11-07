@@ -137,6 +137,9 @@ dl.facts dd{margin:0;overflow-wrap:anywhere}
 .stat-days{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:12px;font-weight:500}
 .stat-days span{background:var(--surface);border-radius:8px;padding:2px 8px;color:var(--ink)}
 .admin-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:6px 12px;font-size:14px;font-weight:600}
+.credit{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;font-size:14px;color:var(--muted)}
+.credit strong{color:var(--ink);font-weight:600}
+.credit img{opacity:.9}
 .footer-link{align-self:center;background:none;border:0;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;padding:8px}
 .review{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
 .review label{font-size:13px;color:var(--muted)}
@@ -271,6 +274,11 @@ form{display:flex;flex-direction:column;gap:12px}
       <p class="hijri" style="margin:10px 0 0">أرقام أصحاب الحرف والخدمات كمرجع لأهالي الوفرة. الاتفاق على العمل والسعر بين الطرفين مباشرة.</p>
       <div id="svOut" class="list" style="margin-top:12px"></div>
     </section>
+    <footer class="credit">
+      <img src="icon-192.png" alt="" width="32" height="32">
+      <div>إعداد وتطوير: <strong>ذياب بن أحمد بن خميس</strong></div>
+      <div class="hijri">© <span id="yr">2026</span> دواوين الوفرة · جميع الحقوق محفوظة</div>
+    </footer>
     <button class="footer-link" type="button" id="adminIn">دخول الإدارة</button>
   </div>
 </main>
@@ -311,19 +319,20 @@ form{display:flex;flex-direction:column;gap:12px}
 
     <form id="svForm" hidden>
       <div class="field"><label for="s-name">الاسم</label><input id="s-name" required placeholder="اسم الشخص أو المحل"></div>
-      <div class="two">
-        <div class="field"><label for="s-craft">المهنة</label><select id="s-craft" required></select></div>
-        <div class="field" id="s-otherRow" hidden><label for="s-other">اكتب المهنة</label><input id="s-other"></div>
-      </div>
+      <div class="field"><span class="lbl">المهنة (اختر واحدة أو أكثر)</span><div class="daypick" id="s-crafts"></div></div>
+      <div class="field"><label for="s-newcraft">مهنة غير موجودة في القائمة؟</label><input id="s-newcraft" placeholder="اكتبها هنا وتُضاف كقسم جديد، وافصل بين أكثر من مهنة بفاصلة"></div>
       <div class="field"><label for="s-phone">رقم الهاتف</label><input id="s-phone" type="tel" inputmode="tel" dir="ltr" required placeholder="مثال: 60000000"></div>
       <div class="field"><label for="s-areas">يخدم مناطق</label><input id="s-areas" placeholder="مثال: الوفرة السكنية وما حولها"></div>
       <div class="field"><label for="s-notes">ملاحظات</label><textarea id="s-notes" placeholder="مثال: متوفر طوال الأسبوع، طوارئ ليلاً"></textarea></div>
       <div class="field"><label for="s-map">رابط الموقع أو المحل (اختياري)</label><input id="s-map" type="url" dir="ltr" placeholder="https://maps..."></div>
       <div class="field admin-only" hidden><label for="s-file">صورة أو شعار (اختياري)</label><input id="s-file" type="file" accept="image/*"><input id="s-photo" type="url" dir="ltr" placeholder="أو الصق رابط صورة https://..."></div>
+      <p class="hijri" id="s-dup" hidden style="color:var(--danger);margin:0"></p>
       <div class="formactions">
         <button class="btn primary" type="submit" id="s-save">متابعة للإرسال</button>
         <button class="btn" type="button" data-close>إلغاء</button>
+        <span class="grow"></span><button class="btn ghost danger" type="button" id="s-del" hidden>حذف</button>
       </div>
+      <div class="confirm" id="s-delConfirm" hidden>حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="s-delYes">نعم، احذف</button><button class="btn sm" type="button" id="s-delNo">تراجع</button></div>
     </form>
 
     <form id="adForm" hidden>
@@ -343,6 +352,7 @@ form{display:flex;flex-direction:column;gap:12px}
       </div>
       <div class="field"><label for="a-map">رابط الموقع (خرائط)</label><input id="a-map" type="url" dir="ltr" placeholder="https://maps..."></div>
       <div class="field admin-only" hidden><label for="a-file">صورة الإعلان (اختياري)</label><input id="a-file" type="file" accept="image/*"><input id="a-photo" type="url" dir="ltr" placeholder="أو الصق رابط صورة https://..."></div>
+      <p class="hijri" id="a-dup" hidden style="color:var(--danger);margin:0"></p>
       <div class="formactions">
         <button class="btn primary" type="submit" id="a-save">متابعة للإرسال</button>
         <button class="btn" type="button" data-close>إلغاء</button>
@@ -365,6 +375,7 @@ form{display:flex;flex-direction:column;gap:12px}
       <div class="field"><label for="d-notes">ملاحظات</label><textarea id="d-notes" placeholder="مثال: مفتوح يومياً في رمضان بعد التراويح"></textarea></div>
       <div class="field admin-only" hidden><label for="d-file">صورة (اختياري)</label><input id="d-file" type="file" accept="image/*"><input id="d-photo" type="url" dir="ltr" placeholder="أو الصق رابط صورة https://..."></div>
       <div class="field admin-only" hidden><label for="d-logofile">شعار الديوان (اختياري)</label><input id="d-logofile" type="file" accept="image/*"></div>
+      <p class="hijri" id="d-dup" hidden style="color:var(--danger);margin:0"></p>
       <div class="formactions">
         <button class="btn primary" type="submit" id="d-save">متابعة للإرسال</button>
         <button class="btn" type="button" data-close>إلغاء</button>
@@ -609,7 +620,7 @@ function slotEditor(box){box.replaceChildren();const id=box.id;let n=0;
 function readSlots(box){return[...box.querySelectorAll(":scope > .slot")].map(r=>{const [p,f,t]=r.querySelectorAll("select");const x={p:p.value};if(hasHour(x.p)&&f.value){x.from=Number(f.value);if(t.value)x.to=Number(t.value)}return x}).filter(x=>x.p)}
 function buildDayPick(){$("#d-days").replaceChildren(...DAYS.map((n,i)=>el("label",{},el("input",{type:"checkbox",id:"dd-"+i,value:String(i)}),n)))}
 $("#addEvent").addEventListener("click",()=>{$("#eventForm").reset();setKind(state.filter==="wedding"?"wedding":"condolence");$("#e-start").value=state.kind==="condolence"?todayStr():"";slotEditor($("#e-menSlots"));slotEditor($("#e-womenSlots"));openSheet("أرسل مناسبة","e")});
-$("#addDiw").addEventListener("click",()=>{$("#diwForm").reset();buildDayPick();slotEditor($("#d-slots"));openSheet("أرسل ديوانك","d")});
+$("#addDiw").addEventListener("click",()=>{$("#diwForm").reset();dupAck=null;$("#d-dup").hidden=true;buildDayPick();slotEditor($("#d-slots"));openSheet("أرسل ديوانك","d")});
 
 /* message lines and sheet rows share one column order */
 const DIW_COLS=["اسم الديوان","صاحب الديوان","القطعة","الشارع / المنزل","الأيام","وقت الاستقبال","الهاتف","رابط الموقع","ملاحظات"];
@@ -688,9 +699,10 @@ function renderAds(){const out=$("#adOut");out.replaceChildren();const list=stat
   group("جارية الآن",now);group("قادمة",soon);group("إعلانات دائمة",perm)}
 $("#a-perm").addEventListener("change",syncPerm);
 function syncPerm(){const on=$("#a-perm").checked;$("#a-dates").hidden=on;$("#a-start").required=!on}
-$("#addAd").addEventListener("click",()=>{$("#adForm").reset();syncPerm();openSheet(admin.pin?"إعلان جديد":"أرسل إعلان","f")});
+$("#addAd").addEventListener("click",()=>{$("#adForm").reset();dupAck=null;$("#a-dup").hidden=true;syncPerm();openSheet(admin.pin?"إعلان جديد":"أرسل إعلان","f")});
 $("#adForm").addEventListener("submit",async e=>{e.preventDefault();backTo="f";const g=f=>$("#a-"+f).value.trim();
   const perm=$("#a-perm").checked;let start=perm?todayStr():g("start"),end=perm?"دائم":(g("end")||start);if(!perm&&end<start)end=start;
+  if(g("phone")&&!dupGate("ads",g("phone"),null,$("#a-dup")))return;
   const row=[g("title"),g("org"),start,end,g("place"),g("time"),g("details"),g("link"),g("phone"),g("map")];
   if(admin.pin&&state.ads.some(x=>x.title.trim()===row[0]&&(perm?x.perm:x.startDate===start))){closeSheet();setNote("إعلان «"+row[0]+"» مسجّل مسبقاً بنفس التاريخ. لتغييره استخدم زر «تعديل».");toast("الإعلان موجود مسبقاً");return}
   if(admin.pin){const b=$("#a-save");b.disabled=true;try{row.push(await photoFrom($("#a-file"),g("photo")));await saveRow("ads",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
@@ -714,6 +726,7 @@ $("#eventForm").addEventListener("submit",async e=>{e.preventDefault();backTo="e
   showSend(linesFor(EV_TITLE,EV_COLS,row))});
 $("#diwForm").addEventListener("submit",async e=>{e.preventDefault();backTo="d";const g=f=>$("#d-"+f).value.trim();
   const days=[...document.querySelectorAll("#d-days input:checked")].map(x=>DAYS[Number(x.value)]);
+  if(g("phone")&&!dupGate("diwaniyas",g("phone"),null,$("#d-dup")))return;
   const row=[g("name"),g("owner"),g("block"),g("street"),days.length===7?"يومياً":days.join("، "),fmtSlots(readSlots($("#d-slots"))),g("phone"),g("map"),g("notes")];
   if(admin.pin){const b=$("#d-save");b.disabled=true;try{row.push("","",await photoFrom($("#d-file"),g("photo")),await photoFrom($("#d-logofile"),""));await saveRow("diwaniyas",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
   showSend(linesFor(DIW_TITLE,DIW_COLS,row))});
@@ -722,17 +735,32 @@ $("#sendBack").addEventListener("click",()=>openSheet(backTo==="e"?"أرسل م�
 $("#sendLink").addEventListener("click",()=>setTimeout(()=>{closeSheet();toast("شكراً، سيُضاف بعد المراجعة")},400));
 
 /* ---------- services directory ---------- */
-const CRAFTS=["صحي (سباك)","كهربائي","نجار","حداد","صباغ","تكييف وتبريد","ألمنيوم وزجاج","بلاط وسيراميك","حدائق وزراعة","تنظيف","ستلايت ودش","نقل عفش","مكافحة حشرات","ميكانيكي سيارات","تناكر ماي","أخرى"];
+const CRAFTS=["صحي (سباك)","كهربائي","نجار","حداد","ألمنيوم وزجاج","صباغ","ديكور","تكييف وتبريد","بلاط وسيراميك","حدائق وزراعة","تنظيف","ستلايت ودش","نقل عفش","مكافحة حشرات","ميكانيكي سيارات","تناكر ماي"];
 const SV_COLS=["الاسم","المهنة","الهاتف","يخدم مناطق","ملاحظات","رابط الموقع"];
 const SV_TITLE="طلب إضافة خدمة – دواوين الوفرة";
 state.svFilter="all";
 const svKey=v=>evKey("sv"+v.phone,v.name);
-function rowToSv(r){return{name:r[0]||"",craft:r[1]||"",phone:toLatin(r[2]).replace(/[^\d+]/g,""),areas:r[3]||"",notes:r[4]||"",mapUrl:r[5]||"",photo:r[6]||"",_row:r._row,raw:Array.from({length:7},(_,k)=>r[k]||"")}}
+const splitCrafts=t=>String(t||"").split(/[،,]/).map(x=>x.trim()).filter(x=>x&&x!=="أخرى");
+function rowToSv(r){const crafts=splitCrafts(r[1]);return{name:r[0]||"",crafts,craft:crafts.join("، "),phone:toLatin(r[2]).replace(/[^\d+]/g,""),areas:r[3]||"",notes:r[4]||"",mapUrl:r[5]||"",photo:r[6]||"",_row:r._row,raw:Array.from({length:7},(_,k)=>r[k]||"")}}
+const allCrafts=()=>CRAFTS.concat([...new Set(state.sv.flatMap(v=>v.crafts))].filter(c=>!CRAFTS.includes(c)));
+/* one phone number = one entry; same number in another section needs a second press */
+const phoneKey=p=>{let d=toLatin(p).replace(/\D/g,"");if(d.startsWith("00"))d=d.slice(2);if(d.length>8&&d.startsWith("965"))d=d.slice(3);return d};
+const SECT={services:"الخدمات",ads:"الإعلانات",diwaniyas:"الدواوين"};
+function phoneOwner(phone,exceptRec){const k=phoneKey(phone);if(k.length<7)return null;
+  const pools=[["services",state.sv,x=>x.phone,x=>x.name],["ads",state.ads,x=>x.phone,x=>x.title],["diwaniyas",state.diw,x=>x.phone,x=>x.name]];
+  for(const [sec,list,ph,nm] of pools)for(const x of list)if(x!==exceptRec&&phoneKey(ph(x))===k)return{sec,name:nm(x),rec:x};return null}
+let dupAck=null;
+function dupGate(section,phone,exceptRec,msgEl){const o=phoneOwner(phone,exceptRec);if(!o){msgEl.hidden=true;return true}
+  const where="«"+o.name+"» في قسم "+SECT[o.sec];
+  if(o.sec===section){msgEl.textContent="هذا الرقم مسجّل مسبقاً باسم "+where+". "+(admin.pin?"لإضافة مهنة أو تغيير البيانات، افتح بطاقته واضغط «تعديل».":"لتعديل بياناته أو إضافة مهنة، تواصل معنا على ‎+965 6000 8341.");msgEl.hidden=false;return false}
+  if(!admin.pin){msgEl.hidden=true;return true}
+  const key=section+"|"+phoneKey(phone);if(dupAck===key){msgEl.hidden=true;return true}
+  dupAck=key;msgEl.textContent="تنبيه: هذا الرقم مسجّل مسبقاً باسم "+where+". إذا كان صحيحاً اضغط الحفظ مرة أخرى.";msgEl.hidden=false;return false}
 function waNum(p){let d=String(p||"").replace(/\D/g,"");if(d.startsWith("00"))d=d.slice(2);if(d.length===8)d="965"+d;return d}
-function svText(v){const L=["🛠️ "+v.craft+": "+v.name,"📞 "+v.phone];if(v.areas)L.push("يخدم: "+v.areas);if(v.notes)L.push(v.notes);
+function svText(v){const L=["🛠️ "+v.crafts.join("، ")+": "+v.name,"📞 "+v.phone];if(v.areas)L.push("يخدم: "+v.areas);if(v.notes)L.push(v.notes);
   if(safeUrl(v.mapUrl))L.push("الموقع: "+v.mapUrl);L.push("","📲 دليل خدمات الوفرة:",SITE+"/#sv-"+svKey(v));return L.join("\n")}
 function svCard(v){return el("article",{class:"dcard",id:"sv-"+svKey(v)},
-    el("div",{class:"dhead"},v.photo?logoEl({logo:v.photo,name:v.name}):null,el("div",{style:"min-width:0"},el("h3",{text:v.name}),el("div",{class:"row",style:"margin-top:4px"},el("span",{class:"chip now",text:v.craft})))),
+    el("div",{class:"dhead"},v.photo?logoEl({logo:v.photo,name:v.name}):null,el("div",{style:"min-width:0"},el("h3",{text:v.name}),el("div",{class:"row",style:"margin-top:4px"},...v.crafts.map(c=>el("span",{class:"chip now",text:c}))))),
     el("div",{class:"mono",style:"font-size:18px;font-weight:600",text:v.phone}),
     v.areas?el("div",{class:"hijri",text:"يخدم: "+v.areas}):null,v.notes?el("div",{class:"ad-details",text:v.notes}):null,
     el("div",{class:"actions"},el("a",{class:"btn sm primary",href:"tel:"+v.phone},"اتصال"),
@@ -740,28 +768,44 @@ function svCard(v){return el("article",{class:"dcard",id:"sv-"+svKey(v)},
       el("button",{class:"btn sm",type:"button",onclick:e=>copy(v.phone,e.currentTarget)},"نسخ الرقم"),
       el("button",{class:"btn sm",type:"button",onclick:()=>shareText(svText(v),"","")},"مشاركة"),
       safeUrl(v.mapUrl)?el("a",{class:"btn sm",href:v.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
-      admin.pin&&v._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("services",v)},"تعديل"):null))}
+      admin.pin&&v._row?el("button",{class:"btn sm ghost",onclick:()=>openSvForm(v)},"تعديل"):null))}
 function renderSv(){const out=$("#svOut");out.replaceChildren();$("#nSv").textContent=state.sv.length;
-  const present=CRAFTS.filter(c=>state.sv.some(v=>v.craft===c)).concat([...new Set(state.sv.map(v=>v.craft))].filter(c=>c&&!CRAFTS.includes(c)));
+  const present=allCrafts().filter(c=>state.sv.some(v=>v.crafts.includes(c)));
   if(state.svFilter!=="all"&&!present.includes(state.svFilter))state.svFilter="all";
   const bar=$("#svCrafts");bar.replaceChildren(...["all",...present].map(c=>{const b=el("button",{type:"button","aria-pressed":String(state.svFilter===c)},c==="all"?"الكل":c);b.addEventListener("click",()=>{state.svFilter=c;renderSv()});return b}));bar.hidden=!present.length;
   if(!state.loaded.v){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل الخدمات…"})));return}
   const q=normAr($("#sq").value.trim());
-  const list=state.sv.filter(v=>(state.svFilter==="all"||v.craft===state.svFilter)&&(!q||normAr([v.name,v.craft,v.areas,v.notes,v.phone].join(" ")).includes(q)))
-    .sort((a,b)=>a.craft.localeCompare(b.craft,"ar")||a.name.localeCompare(b.name,"ar"));
+  const list=state.sv.filter(v=>(state.svFilter==="all"||v.crafts.includes(state.svFilter))&&(!q||normAr([v.name,v.craft,v.areas,v.notes,v.phone].join(" ")).includes(q)))
+    .sort((a,b)=>(a.crafts[0]||"").localeCompare(b.crafts[0]||"","ar")||a.name.localeCompare(b.name,"ar"));
   if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:state.sv.length?"لا نتائج مطابقة":"لا توجد خدمات مسجّلة بعد"}),state.sv.length?"جرّب كلمة أخرى أو اختر «الكل».":"إذا كنت صاحب حرفة أو تعرف رقماً موثوقاً، اضغط «أضف خدمتك»."));return}
   out.append(...list.map(svCard))}
-$("#s-craft").replaceChildren(el("option",{value:"",text:"— اختر المهنة —"}),...CRAFTS.map(c=>el("option",{value:c,text:c})));
-$("#s-craft").addEventListener("change",()=>{$("#s-otherRow").hidden=$("#s-craft").value!=="أخرى"});
 $("#sq").addEventListener("input",renderSv);
-$("#addSv").addEventListener("click",()=>{$("#svForm").reset();$("#s-otherRow").hidden=true;openSheet(admin.pin?"خدمة جديدة":"أضف خدمتك","v")});
+let svEditing=null;
+function buildCraftPick(sel){$("#s-crafts").replaceChildren(...allCrafts().map((c,i)=>el("label",{},Object.assign(el("input",{type:"checkbox",id:"sc-"+i,value:c}),{checked:(sel||[]).includes(c)}),c)))}
+function openSvForm(v,prefill){svEditing=v||null;dupAck=null;$("#svForm").reset();$("#s-dup").hidden=true;$("#s-delConfirm").hidden=true;
+  const d=v||prefill||{};$("#s-name").value=d.name||"";$("#s-phone").value=d.phone||"";$("#s-areas").value=d.areas||"";$("#s-notes").value=d.notes||"";$("#s-map").value=d.mapUrl||"";$("#s-photo").value=d.photo||"";
+  const cr=d.crafts||[];const known=allCrafts();buildCraftPick(cr);$("#s-newcraft").value=cr.filter(c=>!known.includes(c)).join("، ");
+  $("#s-del").hidden=!(v&&admin.pin);openSheet(v?"تعديل الخدمة":admin.pin?"خدمة جديدة":"أضف خدمتك","v")}
+$("#addSv").addEventListener("click",()=>openSvForm(null));
+$("#s-phone").addEventListener("input",()=>{dupAck=null;$("#s-dup").hidden=true});
 $("#svForm").addEventListener("submit",async e=>{e.preventDefault();backTo="v";const g=f=>$("#s-"+f).value.trim();
-  const craft=g("craft")==="أخرى"?(g("other")||"أخرى"):g("craft");const phone=toLatin(g("phone")).replace(/[^\d+]/g,"");
-  if(phone.replace(/\D/g,"").length<7){toast("اكتب رقم هاتف صحيح");return}
-  const row=[g("name"),craft,phone,g("areas"),g("notes"),g("map")];
-  if(admin.pin&&state.sv.some(x=>x.phone===phone&&x.craft===craft)){closeSheet();setNote("الرقم "+phone+" مسجّل مسبقاً في «"+craft+"». لتغييره استخدم زر «تعديل».");toast("الخدمة موجودة مسبقاً");return}
-  if(admin.pin){const b=$("#s-save");b.disabled=true;try{row.push(await photoFrom($("#s-file"),g("photo")));await saveRow("services",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
+  const crafts=[...new Set([...document.querySelectorAll("#s-crafts input:checked")].map(x=>x.value).concat(splitCrafts(g("newcraft"))))];
+  if(!crafts.length){toast("اختر مهنة واحدة على الأقل");return}
+  const phone=toLatin(g("phone")).replace(/[^\d+]/g,"");if(phone.replace(/\D/g,"").length<7){toast("اكتب رقم هاتف صحيح");return}
+  if(!dupGate("services",phone,svEditing,$("#s-dup")))return;
+  const row=[g("name"),crafts.join("، "),phone,g("areas"),g("notes"),g("map")];
+  if(admin.pin){const b=$("#s-save");b.disabled=true;try{row.push(await photoFrom($("#s-file"),g("photo")));
+      if(svEditing){const rec=svEditing;await api({action:"update",sheet:"services",rowNum:rec._row,expect:rec.raw[0],row,...meta("services")});
+        const rr=row.slice();rr._row=rec._row;const k=state.sv.indexOf(rec);if(k>=0)state.sv[k]=rowToSv(rr);svEditing=null;closeSheet();renderSv();toast("تم حفظ التعديل")}
+      else await saveRow("services",row)}
+    catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}return}
   showSend(linesFor(SV_TITLE,SV_COLS,row))});
+$("#s-del").addEventListener("click",()=>{$("#s-delConfirm").hidden=false});
+$("#s-delNo").addEventListener("click",()=>{$("#s-delConfirm").hidden=true});
+$("#s-delYes").addEventListener("click",async()=>{const rec=svEditing;if(!rec)return;const b=$("#s-delYes");b.disabled=true;
+  try{await api({action:"delete",sheet:"services",rowNum:rec._row,expect:rec.raw[0],...meta("services")});const k=state.sv.indexOf(rec);if(k>=0)state.sv.splice(k,1);
+    state.sv.forEach(x=>{if(x._row>rec._row)x._row--});svEditing=null;closeSheet();renderSv();toast("تم الحذف")}
+  catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
 
 /* ---------- apology ---------- */
 let apDiw=null;
@@ -793,6 +837,7 @@ $("#pasteGo").addEventListener("click",()=>{const t=$("#paste-in").value;const k
   else if(/طلب إضافة إعلان/.test(t)&&kv["العنوان"]){kind="ads";cols=AD_COLS}
   else if(/طلب إضافة خدمة/.test(t)&&kv["الاسم"]&&kv["الهاتف"]){kind="services";cols=SV_COLS}
   if(!kind){$("#pasteErr").hidden=false;return}
+  if(kind==="services"){openSvForm(null,{name:kv["الاسم"],crafts:splitCrafts(kv["المهنة"]),phone:kv["الهاتف"],areas:kv["يخدم مناطق"],notes:kv["ملاحظات"],mapUrl:kv["رابط الموقع"]});return}
   const box=$("#reviewFields");box.replaceChildren();const add=(label,val,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:label}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف/.test(label)?"ltr":"auto"}),{value:val||""}))};
   if(kind==="events"||kind==="diwaniyas"||kind==="ads"||kind==="services"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":kind==="ads"?"طلب إعلان. راجع البيانات، والتواريخ بصيغة 2026-11-06 أو «دائم» في «إلى تاريخ»، ويمكنك اختيار صورة الإعلان.":kind==="services"?"طلب خدمة. راجع الاسم والمهنة والرقم قبل الحفظ.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
   else{add("اسم الديوان",kv["اسم الديوان"],0);
@@ -815,7 +860,10 @@ $("#delYes").addEventListener("click",async()=>{if(!editing)return;const {sheet,
   try{await api({action:"delete",sheet,rowNum:rec._row,expect:keyOf(sheet,rec),...meta(sheet)});const list=listOf(sheet);const k=list.indexOf(rec);if(k>=0)list.splice(k,1);
     list.forEach(x=>{if(x._row>rec._row)x._row--});closeSheet();renderAll();toast("تم الحذف")}
   catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
-$("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFields").querySelectorAll("input")].map(x=>x.value.trim());const b=$("#reviewSave");b.disabled=true;
+$("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFields").querySelectorAll("input")].map(x=>x.value.trim());const b=$("#reviewSave");
+  {const sec=pending==="edit"?editing.sheet:pending;const pi={ads:8,diwaniyas:6}[sec];if(pi!=null&&vals[pi]){const o=phoneOwner(vals[pi],pending==="edit"?editing.rec:null);
+    if(o&&o.sec===sec){setNote("الرقم "+vals[pi]+" مسجّل مسبقاً باسم «"+o.name+"» في قسم "+SECT[o.sec]+"، فلم أحفظه مكرراً.");toast("الرقم مكرر");return}}}
+  b.disabled=true;
   try{if(pending==="edit"){const {sheet,rec}=editing;const row=vals.slice();const cols=colsOf(sheet);const pi=cols.indexOf("رابط الصورة");row[pi]=await photoFrom($("#rv-file"),row[pi]);
       const li=cols.indexOf("رابط الشعار");if(li>=0)row[li]=await photoFrom($("#rv-logo"),row[li]);
       if(sheet==="events"){row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4]}
@@ -843,7 +891,7 @@ $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("ch
 function rowToDiw(r){return{name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),street:r[3]||"",days:parseDays(r[4]),hours:r[5]||"",phone:toLatin(r[6]),mapUrl:r[7]||"",notes:r[8]||"",...parseApology(r[9],r[10]),photo:r[11]||"",logo:r[12]||"",_row:r._row,raw:Array.from({length:13},(_,k)=>r[k]||"")}}
 function rowToEvent(r){const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
   return{kind:/عزا/.test(r[0]||"")?"condolence":"wedding",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||"",_row:r._row,raw:Array.from({length:14},(_,k)=>r[k]||"")}}
-state.ads=[];state.sv=[];state.loaded.a=state.loaded.v=false;applyAdmin();renderAll();
+state.ads=[];state.sv=[];state.loaded.a=state.loaded.v=false;applyAdmin();renderAll();try{$("#yr").textContent=String(Math.max(2026,new Date().getFullYear()))}catch(e){}
 async function loadLive(){if(!apiReady())throw new Error("no api");const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),9000);
   try{let q="?t="+Date.now();if(!admin.pin){q+="&hit=1";try{if(!localStorage.getItem("wafra-seen")){q+="&nv=1";localStorage.setItem("wafra-seen","1")}}catch(x){}}
     const r=await fetch(CONFIG.adminApi+q,{signal:ctl.signal});const j=JSON.parse(await r.text());if(!j.ok)throw new Error("bad");
