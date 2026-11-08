@@ -590,11 +590,14 @@ function diwCard(d){const today=new Date().getDay();
       safeUrl(d.mapUrl)?el("a",{class:"btn sm",href:d.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
       admin.pin&&d._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("diwaniyas",d)},"تعديل"):null,
       el("button",{class:"btn sm ghost",onclick:()=>openApology(d)},d.paused||d.offDates.length?"تعديل الاعتذار":(admin.pin?"تسجيل اعتذار":"اعتذار عن الاستقبال"))))}
+/* diwaniyas always listed first, in this order */
+const PINNED_DIW=["ديوان الخميس"];
+const pinRank=d=>{const i=PINNED_DIW.indexOf(normAr(d.name.trim()).replace(/\s+/g," "));return i<0?PINNED_DIW.length:i};
 function renderDiw(){const out=$("#diwOut");out.replaceChildren();$("#nDiw").textContent=state.diw.length;
   $("#diwList").replaceChildren(...state.diw.map(d=>el("option",{value:d.name})));
   if(!state.loaded.d){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل الدواوين…"})));return}
   const q=$("#q").value.trim();const onlyToday=$("#openToday").checked;const today=new Date().getDay();
-  const list=state.diw.filter(d=>(!q||[d.name,d.owner,d.block,d.street].join(" ").includes(q))&&(!onlyToday||(d.days.includes(today)&&!offToday(d)))).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+  const list=state.diw.filter(d=>(!q||[d.name,d.owner,d.block,d.street].join(" ").includes(q))&&(!onlyToday||(d.days.includes(today)&&!offToday(d)))).sort((a,b)=>pinRank(a)-pinRank(b)||a.name.localeCompare(b.name,"ar"));
   if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:state.diw.length?"لا نتائج مطابقة":"لا توجد دواوين مسجّلة بعد"}),state.diw.length?"جرّب كلمة بحث أخرى أو ألغِ فلتر «المفتوحة اليوم».":"اضغط «أرسل ديوانك» لتسجيل ديوانك وأيام استقباله."));return}
   out.append(...list.map(diwCard))}
 
