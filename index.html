@@ -1092,7 +1092,7 @@ function rowToEvent(r){const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s
 state.ads=[];state.sv=[];state.loaded.a=state.loaded.v=false;applyAdmin();renderAll();renderGreetBanner();try{$("#yr").textContent=String(Math.max(2026,new Date().getFullYear()))}catch(e){}
 async function loadLive(){if(!apiReady())throw new Error("no api");const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),9000);
   try{let q="?t="+Date.now();if(!admin.pin){q+="&hit=1";try{if(!localStorage.getItem("wafra-seen")){q+="&nv=1";localStorage.setItem("wafra-seen","1")}}catch(x){}}
-    const r=await fetch(CONFIG.adminApi+q,{signal:ctl.signal});const j=JSON.parse(await r.text());if(!j.ok)throw new Error("bad");
+    const r=await fetch(CONFIG.adminApi+q,{signal:ctl.signal});const txt=await r.text();let j;try{j=JSON.parse(txt)}catch(x){const m=txt.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();throw new Error((m.match(/(SyntaxError|ReferenceError|TypeError|Exception|Error)[^.]{0,160}/)||[m.slice(0,160)])[0])}if(!j.ok)throw new Error("bad");
     const rows=list=>list.map(x=>{const r=x.v.map(v=>String(v==null?"":v).trim());r._row=x.row;return r}).filter(r=>r.some(Boolean));
     return{diw:rows(j.diwaniyas||[]),ev:rows(j.events||[]),ads:rows(j.ads||[]),sv:rows(j.services||[])}}finally{clearTimeout(t)}}
 function useRows(diwRows,evRows){state.diw=diwRows.map(rowToDiw).filter(d=>d.name);
@@ -1103,7 +1103,9 @@ function useAds(rows){state.ads=(rows||[]).map(rowToAd).filter(a=>a.title&&a.sta
 function adminChecks(){if(!admin.pin||!state.badRows||!state.badRows.length)return;
   setNote("صفوف في ورقة المناسبات لا تظهر لأن الاسم أو التاريخ ناقص أو بصيغة غير مفهومة: الصف "+state.badRows.join("، ")+". افتح الجدول وصحّح التاريخ بصيغة 2026-11-06.")}
 loadLive().then(d=>{state.src="live";useRows(d.diw,d.ev);useAds(d.ads);useSv(d.sv)})
-  .catch(()=>Promise.all([loadCsv(CONFIG.diwaniyasCsv),loadCsv(CONFIG.eventsCsv)]).then(([dr,er])=>{state.src="csv";useRows(dr,er)}))
+  .catch(e=>{state.liveErr=(e&&e.message)||"";return Promise.all([loadCsv(CONFIG.diwaniyasCsv),loadCsv(CONFIG.eventsCsv)]).then(([dr,er])=>{state.src="csv";useRows(dr,er);
+    /* backup copy has only diwaniyas and occasions: say so instead of showing empty sections */
+    setNote(admin.pin?"تعذّر الاتصال بكود الجدول، فالإعلانات والخدمات لا تظهر الآن (البيانات محفوظة في الجدول). السبب: "+(state.liveErr||"غير معروف")+". افتح Apps Script وتأكد أن الكود سليم ثم انشر نسخة جديدة.":"الإعلانات والخدمات غير متاحة مؤقتاً، حاول بعد قليل.")})})
   .catch(()=>setNote("تعذّر تحميل البيانات حالياً، حاول لاحقاً."))
   .finally(()=>{state.loaded.d=state.loaded.e=state.loaded.a=state.loaded.v=true;renderAll();focusEv();adminChecks()});
 setInterval(()=>{renderEvents();renderAds()},60000);
