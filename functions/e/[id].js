@@ -41,8 +41,8 @@ export async function onRequestGet({ params, request }) {
     for (const x of rows) {
       const start = normDate(x[3]);
       if (!x[1] || !start || evKey(start, x[1]) !== id) continue;
-      const isC = /عزا/.test(x[0] || "");
-      title = (isC ? "عزاء المرحوم/ة " : "زواج ") + x[1] + (x[2] && !x[1].includes(x[2]) ? " " + x[2] : "");
+      const isC = /عزا/.test(x[0] || ""), isD = /عشا|عزيم|غدا/.test(x[0] || "");
+      title = (isC ? "عزاء المرحوم/ة " : isD ? "دعوة عشاء: " : "زواج ") + x[1] + (x[2] && !x[1].includes(x[2]) ? " " + x[2] : "") + (isD && x[14] ? " بمناسبة " + x[14] : "");
       desc = [x[5], x[6], x[7]].filter(Boolean).join(" · ") || desc;
       const m = String(x[13] || "").match(/(?:\/file\/d\/|[?&]id=)([\w-]{20,})/);
       if (m) image = origin + "/img?id=" + m[1];
