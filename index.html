@@ -584,14 +584,14 @@ function prettyBurial(t){if(isWaiting(t))return"الوفاة خارج الكوي
 function whenPhrase(ev){const t=todayStr();
   if(ev.startDate>t){const n=daysBetween(t,ev.startDate);return n===1?"غداً، "+fmtLong.format(parse(ev.startDate)):"يوم "+fmtLong.format(parse(ev.startDate))}
   if(ev.endDate<t)return"";
-  if(ev.kind==="condolence")return ev.endDate===t?"اليوم آخر أيام العزاء":"العزاء مستمر حتى "+fmtLong.format(parse(ev.endDate));
+  if(ev.kind==="condolence")return "";
   return ev.startDate===t?"اليوم":"مستمر حتى "+fmtLong.format(parse(ev.endDate))}
 function announce(ev,mode){const L=[];
   if(mode==="remind"){const w=whenPhrase(ev);L.push("🔔 "+(ev.kind==="condolence"?"تذكير بالعزاء":ev.kind==="dinner"?"تذكير بدعوة العشاء":"تذكير بحفل الزواج")+(w?" — "+w:""),"")}const range=ev.endDate&&ev.endDate!==ev.startDate?("من "+fmtLong.format(parse(ev.startDate))+" إلى "+fmtLong.format(parse(ev.endDate))):fmtLong.format(parse(ev.startDate));
   const who=ev.person+(ev.family&&!ev.person.includes(ev.family)?" "+ev.family:"");
   if(ev.kind==="condolence"){const fp=famPhrase(ev.family);if(fp)L.push("🤲 عزاء "+fp);L.push("انتقل إلى رحمة الله تعالى: "+ev.person);
     if(ev.burial)L.push("⚰️ "+(isWaiting(ev.burial)?"":"الدفن: ")+prettyBurial(ev.burial));
-    if(ev.venue||ev.area)L.push("العزاء للرجال: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("العزاء للنساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
+    if(ev.venue||ev.area)L.push("العزاء للرجال: "+[ev.venue,ev.area].filter(Boolean).join("، "));if(ev.menTime)L.push("الوقت: "+ev.menTime);if(ev.womenVenue||ev.womenTime)L.push("العزاء للنساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   else if(ev.kind==="dinner"){L.push("🍽️ يتشرف "+who+" بدعوتكم لحضور العشاء"+(ev.reason?" بمناسبة "+ev.reason:""));L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   else{L.push("حفل زواج: "+who);L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · الرجال: "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   if(ev.contact)L.push("للتواصل: "+ev.contact);if(safeUrl(ev.mapUrl))L.push("الموقع: "+ev.mapUrl);if(ev.notes)L.push(ev.notes);
@@ -602,7 +602,7 @@ function announce(ev,mode){const L=[];
 function eventCard(ev){const st=status(ev);const d=parse(ev.startDate);const isC=ev.kind==="condolence",isD=ev.kind==="dinner";
   const facts=el("dl",{class:"facts"});const add=(k,v,cls)=>{if(!v)return;facts.append(el("dt",{text:k}),el("dd",cls?{class:cls,text:v}:{text:v}))};
   if(isC&&ev.burial)add("الدفن",prettyBurial(ev.burial));
-  add("التاريخ",ev.endDate&&ev.endDate!==ev.startDate?fmtLong.format(d)+" ← "+fmtLong.format(parse(ev.endDate)):fmtLong.format(d));
+  if(!isC)add("التاريخ",ev.endDate&&ev.endDate!==ev.startDate?fmtLong.format(d)+" ← "+fmtLong.format(parse(ev.endDate)):fmtLong.format(d));
   add(isC?"الرجال":"المكان",[ev.venue,ev.area].filter(Boolean).join("، ")+(ev.menTime?" · "+ev.menTime:""));
   add("النساء",[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "));add("التواصل",ev.contact,"mono");add("ملاحظات",ev.notes);
   const chips=el("div",{class:"row"},el("span",{class:"chip kind",text:isC?"عزاء":isD?"عشاء":"فرح"}),
