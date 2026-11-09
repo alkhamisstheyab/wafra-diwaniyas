@@ -142,6 +142,10 @@ dl.facts dd{margin:0;overflow-wrap:anywhere}
 .card .photo{grid-column:1/-1}
 .stat-days{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:12px;font-weight:500}
 .stat-days span{background:var(--surface);border-radius:8px;padding:2px 8px;color:var(--ink)}
+.greet-banner{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-radius:var(--r);padding:12px 14px;background:linear-gradient(135deg,var(--accent-soft),var(--wed-soft));border:1px solid var(--line)}
+.greet-banner b{font-family:var(--f-display);font-weight:500;font-size:19px;color:var(--ink)}
+.greet-banner span{color:var(--muted);font-size:14px}
+.greet-item textarea{width:100%;min-height:150px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 12px;font:inherit;color:inherit}
 .admin-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:6px 12px;font-size:14px;font-weight:600}
 .credit{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;font-size:14px;color:var(--muted)}
 .credit strong{color:var(--ink);font-weight:600}
@@ -236,8 +240,10 @@ form{display:flex;flex-direction:column;gap:12px}
 
 <main>
   <div class="wrap">
+    <div class="greet-banner" id="greetBanner" hidden></div>
     <div id="statusNote" class="note" hidden></div>
-    <div class="admin-bar" id="adminBar" hidden>وضع الإدارة: الحفظ مباشر في الجدول <span class="grow"></span><button class="btn sm" type="button" id="adminOut">خروج</button>
+    <div class="admin-bar" id="adminBar" hidden>وضع الإدارة: الحفظ مباشر في الجدول <span class="grow"></span><button class="btn sm" type="button" id="readImg">📷 قراءة إعلان من صورة</button><button class="btn sm" type="button" id="greetBtn">📨 رسائل المناسبات</button><button class="btn sm" type="button" id="adminOut">خروج</button>
+      <input type="file" id="readImgFile" accept="image/*" hidden>
       <div id="adminStats" hidden style="flex-basis:100%;font-weight:500"></div></div>
 
     <section id="view-events">
@@ -461,6 +467,11 @@ form{display:flex;flex-direction:column;gap:12px}
       <div class="confirm" id="delConfirm" hidden style="margin-top:10px">حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="delYes">نعم، احذف</button><button class="btn sm" type="button" id="delNo">تراجع</button></div>
     </div>
 
+    <div id="greetPanel" hidden>
+      <p style="margin:0 0 10px;color:var(--muted)">رسائل جاهزة للمناسبات الرسمية. عدّل النص إن أردت ثم انسخه أو شاركه. التواريخ الهجرية حسب تقويم أم القرى، وقد تختلف يوماً حسب رؤية الهلال.</p>
+      <div id="greetList" class="list"></div>
+    </div>
+
     <div id="sendPanel" hidden>
       <p style="margin:0 0 10px;color:var(--muted)">راجع الطلب ثم أرسله إلى صاحب التطبيق عبر واتساب، وسيُضاف بعد التأكد منه. لإضافة صورة للديوان أو المناسبة، أرسلها في نفس محادثة الواتساب بعد الرسالة.</p>
       <pre class="preview" id="sendText"></pre>
@@ -666,7 +677,7 @@ function renderDiw(){const out=$("#diwOut");out.replaceChildren();$("#nDiw").tex
 
 /* ---------- forms ---------- */
 const overlay=$("#overlay");
-function openSheet(title,form){$("#sheetTitle").textContent=title;const P={e:"#eventForm",d:"#diwForm",f:"#adForm",v:"#svForm",s:"#sendPanel",a:"#apologyForm",p:"#pinForm",i:"#pastePanel",r:"#reviewPanel"};
+function openSheet(title,form){$("#sheetTitle").textContent=title;const P={e:"#eventForm",d:"#diwForm",f:"#adForm",v:"#svForm",o:"#greetPanel",s:"#sendPanel",a:"#apologyForm",p:"#pinForm",i:"#pastePanel",r:"#reviewPanel"};
   for(const k in P)$(P[k]).hidden=k!==form;overlay.hidden=false;const f={e:"#e-person",d:"#d-name",f:"#a-title",v:"#s-name",p:"#pin-in",i:"#paste-in"}[form];if(f)setTimeout(()=>$(f).focus(),50)}
 function closeSheet(){overlay.hidden=true}
 overlay.addEventListener("click",e=>{if(e.target===overlay||e.target.hasAttribute("data-close"))closeSheet()});
@@ -694,7 +705,8 @@ function slotEditor(box){box.replaceChildren();const id=box.id;let n=0;
 function readSlots(box){return[...box.querySelectorAll(":scope > .slot")].map(r=>{const [p,f,t]=r.querySelectorAll("select");const x={p:p.value};if(hasHour(x.p)&&f.value){x.from=Number(f.value);if(t.value)x.to=Number(t.value)}return x}).filter(x=>x.p)}
 function buildDayPick(){$("#d-days").replaceChildren(...DAYS.map((n,i)=>el("label",{},el("input",{type:"checkbox",id:"dd-"+i,value:String(i)}),n)))}
 let evEditing=null;
-function openEventForm(ev){evEditing=ev||null;$("#eventForm").reset();$("#e-delConfirm").hidden=true;
+let evPrefill={};
+function openEventForm(ev){evEditing=ev||null;evPrefill={};$("#eventForm").reset();$("#e-delConfirm").hidden=true;
   setKind(ev?ev.kind:(state.filter==="wedding"||state.filter==="dinner"?state.filter:"condolence"));slotEditor($("#e-menSlots"));slotEditor($("#e-womenSlots"));
   $("#e-start").value=state.kind==="condolence"?todayStr():"";$("#e-bdate").value=todayStr();$("#e-oldTimes").hidden=true;
   if(ev){const set=(id,v)=>{$("#e-"+id).value=v||""};set("person",ev.person);set("family",ev.family);set("start",ev.startDate);set("end",ev.endDate);
@@ -711,7 +723,8 @@ $("#e-delYes").addEventListener("click",async()=>{const rec=evEditing;if(!rec)re
   try{await api({action:"delete",sheet:"events",rowNum:rec._row,expect:rec.raw[1]});const k=state.events.indexOf(rec);if(k>=0)state.events.splice(k,1);
     state.events.forEach(x=>{if(x._row>rec._row)x._row--});evEditing=null;closeSheet();renderEvents();toast("تم الحذف")}
   catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
-$("#addDiw").addEventListener("click",()=>{$("#diwForm").reset();dupAck=null;$("#d-dup").hidden=true;buildDayPick();slotEditor($("#d-slots"));openSheet("أرسل ديوانك","d")});
+let diwPrefillHours="";
+$("#addDiw").addEventListener("click",()=>{diwPrefillHours="";$("#diwForm").reset();dupAck=null;$("#d-dup").hidden=true;buildDayPick();slotEditor($("#d-slots"));openSheet("أرسل ديوانك","d")});
 
 /* message lines and sheet rows share one column order */
 const DIW_COLS=["اسم الديوان","صاحب الديوان","القطعة","الشارع / المنزل","الأيام","وقت الاستقبال","الهاتف","رابط الموقع","ملاحظات"];
@@ -812,8 +825,8 @@ $("#adForm").addEventListener("submit",async e=>{e.preventDefault();backTo="f";c
   if(admin.pin){const b=$("#a-save");b.disabled=true;try{row.push(await photoFrom($("#a-file"),g("photo")),await videoFrom($("#a-vfile"),g("video")));await saveRow("ads",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
   const ls=linesFor(AD_TITLE,AD_COLS,row);if(g("video"))ls.push("رابط الفيديو: "+g("video"));showSend(ls.concat(["","يمكنك إرسال صورة الإعلان أو الفيديو بعد هذه الرسالة."]))});
 
-function shrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const im=new Image();
-  im.onload=()=>{const max=1280;let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
+function shrink(file,maxSide){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const im=new Image();
+  im.onload=()=>{const max=maxSide||1280;let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
     const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);URL.revokeObjectURL(url);
     res(c.toDataURL("image/jpeg",0.8).split(",")[1])};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("img"))};im.src=url})}
 async function photoFrom(fileInput,urlValue){const f=fileInput&&fileInput.files&&fileInput.files[0];if(!f)return urlValue||"";
@@ -830,7 +843,7 @@ $("#eventForm").addEventListener("submit",async e=>{e.preventDefault();backTo="e
     else{cem=$("#e-bcem").value==="other"?g("bcemOther"):g("bcem");burial=[g("bdate"),g("btime"),cem?"مقبرة "+cem:""].filter(Boolean).join(" · ")}}
   const atCem=state.kind==="condolence"&&$("#e-mp1").checked;
   const venue=atCem?(cem?"في مقبرة "+cem:"في المقبرة"):g("venue"),area=atCem?"":g("area");
-  const old=evEditing;const menT=fmtSlots(readSlots($("#e-menSlots")))||(old?old.menTime:""),womenT=fmtSlots(readSlots($("#e-womenSlots")))||(old?old.womenTime:"");
+  const old=evEditing;const menT=fmtSlots(readSlots($("#e-menSlots")))||(old?old.menTime:evPrefill.men||""),womenT=fmtSlots(readSlots($("#e-womenSlots")))||(old?old.womenTime:evPrefill.women||"");
   const row=[kindLabel,g("person"),g("family"),start,end,venue,area,menT,g("wvenue"),womenT,g("contact"),g("map"),g("notes")];
   if(admin.pin&&state.events.some(x=>x!==old&&x.person.trim()===row[1].trim()&&x.startDate===row[3])){setNote("«"+row[1]+"» مسجّلة مسبقاً بنفس التاريخ "+row[3]+"، فلم أكررها. لتغيير شيء فيها استخدم زر «تعديل» في بطاقتها.");closeSheet();toast("المناسبة موجودة مسبقاً");return}
   if(admin.pin){const b=$("#e-save");b.disabled=true;try{row.push(await photoFrom($("#e-file"),g("photo")),reason,burial);
@@ -841,7 +854,7 @@ $("#eventForm").addEventListener("submit",async e=>{e.preventDefault();backTo="e
 $("#diwForm").addEventListener("submit",async e=>{e.preventDefault();backTo="d";const g=f=>$("#d-"+f).value.trim();
   const days=[...document.querySelectorAll("#d-days input:checked")].map(x=>DAYS[Number(x.value)]);
   if(g("phone")&&!dupGate("diwaniyas",g("phone"),null,$("#d-dup")))return;
-  const row=[g("name"),g("owner"),g("block"),g("street"),days.length===7?"يومياً":days.join("، "),fmtSlots(readSlots($("#d-slots"))),g("phone"),g("map"),g("notes")];
+  const row=[g("name"),g("owner"),g("block"),g("street"),days.length===7?"يومياً":days.join("، "),fmtSlots(readSlots($("#d-slots")))||diwPrefillHours,g("phone"),g("map"),g("notes")];
   if(admin.pin){const b=$("#d-save");b.disabled=true;try{row.push("","",await photoFrom($("#d-file"),g("photo")),await photoFrom($("#d-logofile"),""));await saveRow("diwaniyas",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
   showSend(linesFor(DIW_TITLE,DIW_COLS,row))});
 $("#sendCopy").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(lastSend);toast("تم النسخ")}catch(e){const r=document.createRange();r.selectNodeContents($("#sendText"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("النص محدد، انسخه يدوياً")}});
@@ -920,6 +933,71 @@ $("#s-delYes").addEventListener("click",async()=>{const rec=svEditing;if(!rec)re
   try{await api({action:"delete",sheet:"services",rowNum:rec._row,expect:rec.raw[0],...meta("services")});const k=state.sv.indexOf(rec);if(k>=0)state.sv.splice(k,1);
     state.sv.forEach(x=>{if(x._row>rec._row)x._row--});svEditing=null;closeSheet();renderSv();toast("تم الحذف")}
   catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
+
+/* ---------- read an invitation image (admin) ---------- */
+function attachFile(input,file){try{const dt=new DataTransfer();dt.items.add(file);input.files=dt.files}catch(e){}}
+const pickDay=t=>{t=normAr(String(t||""));return DAYS.findIndex(d=>t.includes(normAr(d).replace("ال","")))};
+$("#readImg").addEventListener("click",()=>{$("#readImgFile").value="";$("#readImgFile").click()});
+$("#readImgFile").addEventListener("change",async()=>{const f=$("#readImgFile").files[0];if(!f)return;const btn=$("#readImg");btn.disabled=true;
+  try{toast("جارٍ قراءة الصورة… ثوانٍ قليلة");const data=await shrink(f,1600);
+    const r=await api({action:"extract",data,type:"image/jpeg",today:todayStr()});const d=r.data||{};const v=k=>String(d[k]==null?"":d[k]).trim();
+    const sec=d.section;
+    if(sec==="ads"){location.hash="ads";$("#addAd").click();const set=(id,k)=>{$("#a-"+id).value=v(k)};
+      set("title","title");set("org","org");set("place","place");set("time","time");set("details","details");set("link","link");set("phone","phone");set("map","mapUrl");
+      if(d.permanent){$("#a-perm").checked=true}else{$("#a-start").value=normDate(v("startDate"));$("#a-end").value=normDate(v("endDate"))}syncPerm();attachFile($("#a-file"),f)}
+    else if(sec==="diwaniyas"){location.hash="diwaniyas";$("#addDiw").click();["name","owner","block","street","phone","notes"].forEach(k=>{$("#d-"+k).value=v(k)});$("#d-map").value=v("mapUrl");
+      (Array.isArray(d.days)?d.days:String(d.days||"").split(/[،,]/)).forEach(x=>{const i=pickDay(x);if(i>=0)$("#dd-"+i).checked=true});
+      if(/يومي/.test(String(d.days)))DAYS.forEach((_,i)=>$("#dd-"+i).checked=true);diwPrefillHours=v("hours");attachFile($("#d-file"),f)}
+    else if(sec==="services"){location.hash="services";openSvForm(null,{name:v("name"),crafts:Array.isArray(d.crafts)?d.crafts:splitCrafts(v("crafts")),phone:v("phone"),areas:v("areas"),notes:v("notes"),mapUrl:v("mapUrl")});attachFile($("#s-file"),f)}
+    else{location.hash="events";openEventForm(null);const k=["condolence","wedding","dinner"].includes(d.kind)?d.kind:"condolence";setKind(k);
+      const set=(id,key)=>{$("#e-"+id).value=v(key)};set("person","person");set("family","family");set("wvenue","womenVenue");set("contact","contact");set("map","mapUrl");set("notes","notes");set("reason","reason");
+      $("#e-start").value=normDate(v("startDate"))||(k==="condolence"?todayStr():"");$("#e-end").value=normDate(v("endDate"));
+      if(k==="condolence"){if(d.burialWaiting)$("#e-b2").checked=true;else{$("#e-bdate").value=normDate(v("burialDate"))||$("#e-start").value;$("#e-btime").value=BURIAL_TIMES.find(x=>v("burialTime").includes(x.replace("صلاة ","")))||"";
+          const c=v("cemetery").replace(/^مقبرة\s*/,"");if(c){const hit=CEMS.find(x=>c.includes(x));if(hit)$("#e-bcem").value=hit;else{$("#e-bcem").value="other";$("#e-bcemOther").value=c}}}
+        if(d.menAtCemetery)$("#e-mp1").checked=true;else{set("venue","venue");set("area","area")}}
+      else{set("venue","venue");set("area","area")}
+      evPrefill={men:v("menTime"),women:v("womenTime")};
+      if(evPrefill.men||evPrefill.women){$("#e-oldTimes").textContent="الوقت من الصورة: "+[evPrefill.men?"الرجال "+evPrefill.men:"",evPrefill.women?"النساء "+evPrefill.women:""].filter(Boolean).join(" · ")+". اختر وقتاً آخر إذا أردت تغييره.";$("#e-oldTimes").hidden=false}
+      syncMenPlace();syncBurial();attachFile($("#e-file"),f)}
+    toast("تمت تعبئة البيانات من الصورة. راجعها ثم اضغط حفظ")}
+  catch(err){if(err&&err.code==="nokey")setNote("قراءة الصور تحتاج مفتاح Gemini في كود الجدول. أضفه بحسب الخطوات ثم حاول مرة أخرى.");
+    else if(err&&err.code==="ai")setNote("تعذّرت قراءة الصورة: "+(err.detail||"")+". جرّب صورة أوضح.");else adminFail(err)}
+  finally{btn.disabled=false}});
+
+/* ---------- official occasions: greeting banner + ready messages ---------- */
+let hijriFmt=null;try{hijriFmt=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn",{day:"numeric",month:"numeric",year:"numeric"})}catch(e){}
+function hijriOf(d){if(!hijriFmt)return null;const p=hijriFmt.formatToParts(d);const g=t=>Number((p.find(x=>x.type===t)||{}).value);return{d:g("day"),m:g("month"),y:g("year")}}
+const SIGN="\n\nدواوين الوفرة 🌿\n"+SITE;
+const OFFICIAL=[
+ {id:"ramadan",name:"شهر رمضان المبارك",hijri:[9,1],days:3,emoji:"🌙",banner:"مبارك عليكم الشهر",
+  msg:()=>"🌙 مبارك عليكم الشهر\n\nبمناسبة حلول شهر رمضان المبارك، نتقدم لأهالي مدينة الوفرة السكنية بأطيب التهاني، سائلين الله أن يتقبل منا ومنكم الصيام والقيام وصالح الأعمال.\n\nوكل عام وأنتم بخير"},
+ {id:"fitr",name:"عيد الفطر المبارك",hijri:[10,1],days:3,emoji:"🎉",banner:"عيدكم مبارك، وعساكم من عواده",
+  msg:()=>"🎉 عيدكم مبارك\n\nبمناسبة عيد الفطر المبارك، نتقدم لأهالي مدينة الوفرة السكنية بخالص التهاني والتبريكات.\nتقبّل الله منا ومنكم صالح الأعمال، وأعاده علينا وعليكم بالخير واليمن والبركات.\n\nعساكم من عواده"},
+ {id:"adha",name:"عيد الأضحى المبارك",hijri:[12,10],days:4,emoji:"🐑",banner:"عيدكم مبارك، وعساكم من عواده",
+  msg:()=>"🎉 عيدكم مبارك\n\nبمناسبة عيد الأضحى المبارك، نتقدم لأهالي مدينة الوفرة السكنية بخالص التهاني والتبريكات.\nتقبّل الله منا ومنكم ومن حجاج بيت الله الحرام، وأعاده علينا وعليكم بالخير واليمن والبركات.\n\nعساكم من عواده"},
+ {id:"hijri",name:"رأس السنة الهجرية",hijri:[1,1],days:1,emoji:"🌙",banner:"كل عام وأنتم بخير",
+  msg:d=>"🌙 كل عام وأنتم بخير\n\nبمناسبة حلول العام الهجري الجديد "+((hijriOf(d)||{}).y||"")+" هـ، نتقدم لأهالي مدينة الوفرة السكنية بأطيب التهاني، سائلين الله أن يجعله عام خير وبركة وأمن وأمان على الكويت وأهلها."},
+ {id:"mawlid",name:"ذكرى المولد النبوي الشريف",hijri:[3,12],days:1,emoji:"🕌",banner:"اللهم صلِّ وسلم على نبينا محمد",
+  msg:()=>"🕌 بمناسبة ذكرى المولد النبوي الشريف\n\nنتقدم لأهالي مدينة الوفرة السكنية بالتهنئة، سائلين الله أن يعيد هذه الذكرى على الأمة الإسلامية بالخير واليمن والبركات.\n\nاللهم صلِّ وسلم على نبينا محمد"},
+ {id:"national",name:"العيد الوطني وعيد التحرير",greg:[2,25],days:2,emoji:"🇰🇼",banner:"كل عام والكويت بخير",
+  msg:d=>{const y=d.getFullYear();return"🇰🇼 كل عام والكويت بخير\n\nبمناسبة العيد الوطني الـ "+(y-1961)+" وعيد التحرير الـ "+(y-1991)+"، نرفع أسمى آيات التهاني والتبريكات إلى مقام حضرة صاحب السمو أمير البلاد، وسمو ولي العهد، وإلى الشعب الكويتي الكريم، سائلين الله أن يحفظ الكويت وأهلها من كل مكروه.\n\nدام عزّك يا كويت"}}];
+function occStart(o,from){/* first day of the occasion on or after `from`, including a running one */
+  for(let i=-(o.days-1);i<=400;i++){const d=new Date(from);d.setHours(12,0,0,0);d.setDate(d.getDate()+i);
+    if(o.greg){if(d.getMonth()+1===o.greg[0]&&d.getDate()===o.greg[1])return d}else{const h=hijriOf(d);if(h&&h.m===o.hijri[0]&&h.d===o.hijri[1])return d}}return null}
+const isoOf=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+function occList(){const now=new Date();return OFFICIAL.map(o=>{const st=occStart(o,now);if(!st)return null;const end=new Date(st);end.setDate(end.getDate()+o.days-1);
+  return{o,start:isoOf(st),end:isoOf(end),date:st,active:isoOf(st)<=todayStr()&&todayStr()<=isoOf(end)}}).filter(Boolean).sort((a,b)=>a.start.localeCompare(b.start))}
+function renderGreetBanner(){const box=$("#greetBanner");const a=occList().find(x=>x.active);if(!a){box.hidden=true;return}
+  box.replaceChildren(el("div",{style:"flex:1 1 200px;min-width:0"},el("b",{text:a.o.emoji+" "+a.o.banner}),el("div",{},el("span",{text:"بمناسبة "+a.o.name}))),
+    el("button",{class:"btn sm primary",type:"button",onclick:()=>shareText(a.o.msg(a.date)+SIGN,"","")},"مشاركة التهنئة"));box.hidden=false}
+$("#greetBtn").addEventListener("click",()=>{const list=$("#greetList");list.replaceChildren(...occList().map((x,i)=>{
+    const h=hijriFmt?(()=>{try{return new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn",{day:"numeric",month:"long",year:"numeric"}).format(x.date)}catch(e){return""}})():"";
+    const ta=el("textarea",{id:"greet-"+i});ta.value=x.o.msg(x.date)+SIGN;
+    return el("div",{class:"dcard greet-item"},el("h3",{text:x.o.emoji+" "+x.o.name}),
+      el("div",{class:"hijri",text:(x.active?"الآن · ":"")+fmtLong.format(x.date)+(h?" · "+h:"")}),ta,
+      el("div",{class:"actions"},el("button",{class:"btn sm",type:"button",onclick:e=>copy(ta.value,e.currentTarget)},"نسخ"),
+        el("button",{class:"btn sm primary",type:"button",onclick:()=>shareText(ta.value,"","")},"مشاركة واتساب")))}));
+  openSheet("رسائل المناسبات الرسمية","o")});
 
 /* ---------- apology ---------- */
 let apDiw=null;
@@ -1007,7 +1085,7 @@ function rowToDiw(r){return{name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),str
 function rowToEvent(r){const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
   if(/عزا/.test(r[0]||"")&&s)e=addDays(s,2); /* condolences always run three days */
   return{kind:/عزا/.test(r[0]||"")?"condolence":/عشا|عزيم|غدا/.test(r[0]||"")?"dinner":"wedding",reason:r[14]||"",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||"",burial:r[15]||"",_row:r._row,raw:Array.from({length:16},(_,k)=>r[k]||"")}}
-state.ads=[];state.sv=[];state.loaded.a=state.loaded.v=false;applyAdmin();renderAll();try{$("#yr").textContent=String(Math.max(2026,new Date().getFullYear()))}catch(e){}
+state.ads=[];state.sv=[];state.loaded.a=state.loaded.v=false;applyAdmin();renderAll();renderGreetBanner();try{$("#yr").textContent=String(Math.max(2026,new Date().getFullYear()))}catch(e){}
 async function loadLive(){if(!apiReady())throw new Error("no api");const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),9000);
   try{let q="?t="+Date.now();if(!admin.pin){q+="&hit=1";try{if(!localStorage.getItem("wafra-seen")){q+="&nv=1";localStorage.setItem("wafra-seen","1")}}catch(x){}}
     const r=await fetch(CONFIG.adminApi+q,{signal:ctl.signal});const j=JSON.parse(await r.text());if(!j.ok)throw new Error("bad");
