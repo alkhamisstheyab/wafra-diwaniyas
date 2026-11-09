@@ -187,7 +187,7 @@ form{display:flex;flex-direction:column;gap:12px}
 .addslot{align-self:flex-start}
 .preview{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;max-height:260px;overflow:auto;overflow-wrap:anywhere;margin:0}
 .daypick label{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:14px;color:var(--ink)}
-.daypick input{accent-color:var(--accent)}
+.daypick input,.field .daypick input{accent-color:var(--accent);width:auto;padding:0;flex:none}
 .formactions{display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap;margin-top:4px}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;background:var(--sunk);border-radius:10px;padding:8px 10px}
 
@@ -306,15 +306,36 @@ form{display:flex;flex-direction:column;gap:12px}
       <div class="field"><label for="e-family">العائلة</label><input id="e-family" placeholder="مثال: الخميس"></div>
       <div class="field" id="e-reasonRow" hidden><label for="e-reason">سبب العشاء (المناسبة)</label><input id="e-reason" list="reasonList" placeholder="اختر أو اكتب السبب"></div>
       <datalist id="reasonList"><option value="عودة من الحج"><option value="عودة من العمرة"><option value="تخرّج"><option value="ترقية"><option value="شفاء وسلامة"><option value="قدوم مولود"><option value="عودة من السفر"><option value="منزل جديد"><option value="ملكة (عقد قران)"><option value="نجاح"><option value="وفاء بنذر"></datalist>
+      <div class="field" id="e-burialBox"><span class="lbl">الدفن</span>
+        <div class="daypick">
+          <label><input type="radio" name="e-bmode" id="e-b1" value="set" checked> موعد الدفن محدد</label>
+          <label><input type="radio" name="e-bmode" id="e-b2" value="wait"> الوفاة خارج الكويت، بانتظار وصول الجثمان</label>
+        </div>
+        <div class="two" id="e-bset" style="margin-top:8px">
+          <div class="field"><label for="e-bdate">يوم الدفن</label><input id="e-bdate" type="date"></div>
+          <div class="field"><label for="e-btime">وقت الدفن</label><select id="e-btime"><option value="">— اختر —</option><option>صباحاً</option><option>بعد صلاة العصر</option><option>بعد صلاة العشاء</option></select></div>
+          <div class="field"><label for="e-bcem">المقبرة</label><select id="e-bcem"><option value="">— اختر —</option><option>الصليبخات</option><option>صبحان</option><option>الجهراء</option><option value="other">مقبرة أخرى</option></select></div>
+          <div class="field" id="e-bcemOtherRow" hidden><label for="e-bcemOther">اسم المقبرة</label><input id="e-bcemOther"></div>
+        </div>
+      </div>
       <div class="two">
         <div class="field"><label for="e-start">من تاريخ</label><input id="e-start" type="date" required></div>
         <div class="field"><label for="e-end">إلى تاريخ</label><input id="e-end" type="date"></div>
       </div>
-      <div class="field"><label for="e-venue" id="e-venue-l">مكان العزاء للرجال</label><input id="e-venue" list="diwList" placeholder="اسم الديوان أو الصالة"></div>
-      <div class="field"><label for="e-area">العنوان (قطعة / شارع / منزل)</label><input id="e-area"></div>
+      <div class="field" id="e-menPlaceRow"><span class="lbl">مكان العزاء للرجال</span>
+        <div class="daypick">
+          <label><input type="radio" name="e-mplace" id="e-mp1" value="cem"> في المقبرة</label>
+          <label><input type="radio" name="e-mplace" id="e-mp2" value="addr" checked> عنوان العزاء</label>
+        </div>
+      </div>
+      <div id="e-venueBox" style="display:flex;flex-direction:column;gap:12px">
+        <div class="field"><label for="e-venue" id="e-venue-l">مكان العزاء للرجال</label><input id="e-venue" list="diwList" placeholder="اسم الديوان أو الصالة"></div>
+        <div class="field"><label for="e-area">العنوان (قطعة / شارع / منزل)</label><input id="e-area"></div>
+      </div>
       <div class="field"><span class="lbl" id="e-mentime-l">وقت الرجال</span><div class="slots" id="e-menSlots"></div></div>
       <div class="field"><label for="e-wvenue">مكان النساء</label><input id="e-wvenue"></div>
       <div class="field"><span class="lbl">وقت النساء</span><div class="slots" id="e-womenSlots"></div></div>
+      <p class="hijri" id="e-oldTimes" hidden style="margin:0"></p>
       <div class="two">
         <div class="field"><label for="e-contact">هاتف للتواصل</label><input id="e-contact" type="tel" inputmode="tel" dir="ltr"></div>
         <div class="field"><label for="e-map">رابط الموقع (خرائط)</label><input id="e-map" type="url" dir="ltr" placeholder="https://maps..."></div>
@@ -324,7 +345,9 @@ form{display:flex;flex-direction:column;gap:12px}
       <div class="formactions">
         <button class="btn primary" type="submit" id="e-save">متابعة للإرسال</button>
         <button class="btn" type="button" data-close>إلغاء</button>
+        <span class="grow"></span><button class="btn ghost danger" type="button" id="e-del" hidden>حذف</button>
       </div>
+      <div class="confirm" id="e-delConfirm" hidden>حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="e-delYes">نعم، احذف</button><button class="btn sm" type="button" id="e-delNo">تراجع</button></div>
     </form>
 
     <form id="svForm" hidden>
@@ -535,9 +558,17 @@ async function shareText(text,photo,fname){const id=driveId(photo);
   location.href="https://wa.me/?text="+encodeURIComponent(text)}
 const shareDiw=d=>shareText(diwInvite(d),d.photo||d.logo,"دعوة ديوان.jpg");
 async function shareEvent(ev,btn){return shareText(announce(ev),ev.photo,"دعوة.jpg")}
+/* family line and burial text for condolences */
+const famPhrase=f=>{f=String(f||"").trim();if(!f)return"";return /^(آل|ال\s|عائلة|أسرة)/.test(f)?f:"عائلة "+f};
+const BURIAL_TIMES=["صباحاً","بعد صلاة العصر","بعد صلاة العشاء"],CEMS=["الصليبخات","صبحان","الجهراء"];
+const isWaiting=b=>/بانتظار/.test(String(b||""));
+function parseBurial(t){t=String(t||"");const m=t.match(/مقبرة\s+([^·]+)/);return{wait:isWaiting(t),date:(toLatin(t).match(/\d{4}-\d{2}-\d{2}/)||[""])[0],time:BURIAL_TIMES.find(x=>t.includes(x))||"",cem:m?m[1].trim():""}}
+function prettyBurial(t){if(isWaiting(t))return"الوفاة خارج الكويت، والدفن بعد وصول الجثمان، وسيُعلن موعده لاحقاً";return String(t||"").replace(/\d{4}-\d{2}-\d{2}/,d=>fmtLong.format(parse(d)))}
 function announce(ev){const L=[];const range=ev.endDate&&ev.endDate!==ev.startDate?("من "+fmtLong.format(parse(ev.startDate))+" إلى "+fmtLong.format(parse(ev.endDate))):fmtLong.format(parse(ev.startDate));
   const who=ev.person+(ev.family&&!ev.person.includes(ev.family)?" "+ev.family:"");
-  if(ev.kind==="condolence"){L.push("انتقل إلى رحمة الله تعالى: "+who);L.push("العزاء للرجال: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("العزاء للنساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
+  if(ev.kind==="condolence"){const fp=famPhrase(ev.family);if(fp)L.push("🤲 عزاء "+fp);L.push("انتقل إلى رحمة الله تعالى: "+ev.person);
+    if(ev.burial)L.push("⚰️ "+(isWaiting(ev.burial)?"":"الدفن: ")+prettyBurial(ev.burial));
+    if(ev.venue||ev.area)L.push("العزاء للرجال: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("العزاء للنساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   else if(ev.kind==="dinner"){L.push("🍽️ يتشرف "+who+" بدعوتكم لحضور العشاء"+(ev.reason?" بمناسبة "+ev.reason:""));L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   else{L.push("حفل زواج: "+who);L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · الرجال: "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   if(ev.contact)L.push("للتواصل: "+ev.contact);if(safeUrl(ev.mapUrl))L.push("الموقع: "+ev.mapUrl);if(ev.notes)L.push(ev.notes);
@@ -547,17 +578,19 @@ function announce(ev){const L=[];const range=ev.endDate&&ev.endDate!==ev.startDa
 /* ---------- events ---------- */
 function eventCard(ev){const st=status(ev);const d=parse(ev.startDate);const isC=ev.kind==="condolence",isD=ev.kind==="dinner";
   const facts=el("dl",{class:"facts"});const add=(k,v,cls)=>{if(!v)return;facts.append(el("dt",{text:k}),el("dd",cls?{class:cls,text:v}:{text:v}))};
+  if(isC&&ev.burial)add("الدفن",prettyBurial(ev.burial));
   add("التاريخ",ev.endDate&&ev.endDate!==ev.startDate?fmtLong.format(d)+" ← "+fmtLong.format(parse(ev.endDate)):fmtLong.format(d));
   add(isC?"الرجال":"المكان",[ev.venue,ev.area].filter(Boolean).join("، ")+(ev.menTime?" · "+ev.menTime:""));
   add("النساء",[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "));add("التواصل",ev.contact,"mono");add("ملاحظات",ev.notes);
   const chips=el("div",{class:"row"},el("span",{class:"chip kind",text:isC?"عزاء":isD?"عشاء":"فرح"}),
     st==="now"?el("span",{class:"chip now",text:ev.startDate===todayStr()&&ev.endDate===ev.startDate?"اليوم":"جارٍ الآن"}):null,
     st==="soon"?el("span",{class:"chip soft",text:"قادم"}):null,st==="past"?el("span",{class:"chip soft",text:"انتهى"}):null,
-    ev.family?el("span",{class:"chip soft",text:"عائلة "+ev.family}):null);
+    isC&&isWaiting(ev.burial)?el("span",{class:"chip soft",text:"بانتظار وصول الجثمان"}):null,
+    ev.family?el("span",{class:"chip soft",text:famPhrase(ev.family)}):null);
   const actions=el("div",{class:"actions"},el("button",{class:"btn sm",onclick:e=>copy(announce(ev),e.currentTarget)},"نسخ الإعلان"),
     el("button",{class:"btn sm",type:"button",onclick:e=>shareEvent(ev,e.currentTarget)},"مشاركة واتساب"),
     safeUrl(ev.mapUrl)?el("a",{class:"btn sm",href:ev.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
-    admin.pin&&ev._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("events",ev)},"تعديل"):null);
+    admin.pin&&ev._row?el("button",{class:"btn sm ghost",onclick:()=>openEventForm(ev)},"تعديل"):null);
   return el("article",{class:"card "+(isC?"k-condolence":isD?"k-dinner":"k-wedding")+(st==="past"?" past":""),id:"ev-"+evKey(ev.startDate,ev.person)},
     photoEl(ev.photo,ev.person),
     el("div",{class:"datebox"},el("b",{text:String(d.getDate())}),el("span",{text:fmtMonth.format(d)})),
@@ -623,7 +656,14 @@ document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("#light
 $("#lbClose").addEventListener("click",closePhoto);$("#lightbox").addEventListener("click",e=>{if(e.target.id==="lightbox")closePhoto()});
 function setKind(k){state.kind=k;document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.k===k)));
   const c=k==="condolence",dn=k==="dinner";$("#e-person-l").textContent=c?"اسم المتوفى":dn?"صاحب الدعوة":"اسم العريس (أو المناسبة)";
-  $("#e-venue-l").textContent=c?"مكان العزاء للرجال":dn?"مكان العشاء":"مكان الحفل";$("#e-mentime-l").textContent=c?"وقت العزاء للرجال":dn?"وقت العشاء":"وقت الحفل للرجال";$("#e-reasonRow").hidden=!dn}
+  $("#e-venue-l").textContent=c?"اسم مكان العزاء (ديوان أو صالة أو منزل)":dn?"مكان العشاء":"مكان الحفل";$("#e-mentime-l").textContent=c?"وقت العزاء للرجال":dn?"وقت العشاء":"وقت الحفل للرجال";$("#e-reasonRow").hidden=!dn;
+  document.querySelector('label[for="e-start"]').textContent=c?"أيام العزاء من":"من تاريخ";document.querySelector('label[for="e-end"]').textContent=c?"إلى":"إلى تاريخ";
+  $("#e-burialBox").hidden=!c;$("#e-menPlaceRow").hidden=!c;syncMenPlace()}
+function syncMenPlace(){$("#e-venueBox").hidden=state.kind==="condolence"&&$("#e-mp1").checked}
+function syncBurial(){$("#e-bset").hidden=$("#e-b2").checked;$("#e-bcemOtherRow").hidden=$("#e-bcem").value!=="other"}
+document.querySelectorAll('input[name="e-mplace"]').forEach(x=>x.addEventListener("change",syncMenPlace));
+document.querySelectorAll('input[name="e-bmode"]').forEach(x=>x.addEventListener("change",syncBurial));
+$("#e-bcem").addEventListener("change",syncBurial);
 document.querySelectorAll("#kindSeg button").forEach(b=>b.addEventListener("click",()=>{setKind(b.dataset.k);const st=$("#e-start");if(b.dataset.k!=="condolence"&&st.value===todayStr())st.value="";if(b.dataset.k==="condolence"&&!st.value)st.value=todayStr()}));
 function slotEditor(box){box.replaceChildren();const id=box.id;let n=0;
   const addRow=()=>{const i=n++;const opt=(v,t)=>el("option",{value:v,text:t});
@@ -635,7 +675,24 @@ function slotEditor(box){box.replaceChildren();const id=box.id;let n=0;
   const addBtn=el("button",{type:"button",class:"btn sm addslot",onclick:addRow},"+ فترة أخرى");box.append(addBtn);addRow()}
 function readSlots(box){return[...box.querySelectorAll(":scope > .slot")].map(r=>{const [p,f,t]=r.querySelectorAll("select");const x={p:p.value};if(hasHour(x.p)&&f.value){x.from=Number(f.value);if(t.value)x.to=Number(t.value)}return x}).filter(x=>x.p)}
 function buildDayPick(){$("#d-days").replaceChildren(...DAYS.map((n,i)=>el("label",{},el("input",{type:"checkbox",id:"dd-"+i,value:String(i)}),n)))}
-$("#addEvent").addEventListener("click",()=>{$("#eventForm").reset();setKind(state.filter==="wedding"||state.filter==="dinner"?state.filter:"condolence");$("#e-start").value=state.kind==="condolence"?todayStr():"";slotEditor($("#e-menSlots"));slotEditor($("#e-womenSlots"));openSheet("أرسل مناسبة","e")});
+let evEditing=null;
+function openEventForm(ev){evEditing=ev||null;$("#eventForm").reset();$("#e-delConfirm").hidden=true;
+  setKind(ev?ev.kind:(state.filter==="wedding"||state.filter==="dinner"?state.filter:"condolence"));slotEditor($("#e-menSlots"));slotEditor($("#e-womenSlots"));
+  $("#e-start").value=state.kind==="condolence"?todayStr():"";$("#e-bdate").value=todayStr();$("#e-oldTimes").hidden=true;
+  if(ev){const set=(id,v)=>{$("#e-"+id).value=v||""};set("person",ev.person);set("family",ev.family);set("start",ev.startDate);set("end",ev.endDate);
+    set("wvenue",ev.womenVenue);set("contact",ev.contact);set("map",ev.mapUrl);set("notes",ev.notes);set("reason",ev.reason);set("photo",ev.photo);
+    if(ev.kind==="condolence"&&/مقبرة/.test(ev.venue)&&!ev.area){$("#e-mp1").checked=true}else{set("venue",ev.venue);set("area",ev.area)}
+    const b=parseBurial(ev.burial);if(b.wait)$("#e-b2").checked=true;if(b.date)$("#e-bdate").value=b.date;$("#e-btime").value=b.time;
+    if(b.cem){if(CEMS.includes(b.cem))$("#e-bcem").value=b.cem;else{$("#e-bcem").value="other";$("#e-bcemOther").value=b.cem}}
+    if(ev.menTime||ev.womenTime){$("#e-oldTimes").textContent="الوقت الحالي: "+[ev.menTime?"الرجال "+ev.menTime:"",ev.womenTime?"النساء "+ev.womenTime:""].filter(Boolean).join(" · ")+". اترك الوقت فارغاً للإبقاء عليه.";$("#e-oldTimes").hidden=false}}
+  syncMenPlace();syncBurial();$("#e-del").hidden=!(ev&&admin.pin);openSheet(ev?"تعديل المناسبة":admin.pin?"مناسبة جديدة":"أرسل مناسبة","e")}
+$("#addEvent").addEventListener("click",()=>openEventForm(null));
+$("#e-del").addEventListener("click",()=>{$("#e-delConfirm").hidden=false});
+$("#e-delNo").addEventListener("click",()=>{$("#e-delConfirm").hidden=true});
+$("#e-delYes").addEventListener("click",async()=>{const rec=evEditing;if(!rec)return;const b=$("#e-delYes");b.disabled=true;
+  try{await api({action:"delete",sheet:"events",rowNum:rec._row,expect:rec.raw[1]});const k=state.events.indexOf(rec);if(k>=0)state.events.splice(k,1);
+    state.events.forEach(x=>{if(x._row>rec._row)x._row--});evEditing=null;closeSheet();renderEvents();toast("تم الحذف")}
+  catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
 $("#addDiw").addEventListener("click",()=>{$("#diwForm").reset();dupAck=null;$("#d-dup").hidden=true;buildDayPick();slotEditor($("#d-slots"));openSheet("أرسل ديوانك","d")});
 
 /* message lines and sheet rows share one column order */
@@ -737,10 +794,19 @@ let backTo="d";
 $("#eventForm").addEventListener("submit",async e=>{e.preventDefault();backTo="e";const g=f=>$("#e-"+f).value.trim();
   let start=g("start"),end=g("end");if(!end)end=state.kind==="condolence"?addDays(start,2):start;if(end<start)end=start;
   const kindLabel={condolence:"عزاء",wedding:"فرح",dinner:"عشاء"}[state.kind];const reason=state.kind==="dinner"?g("reason"):"";
-  const row=[kindLabel,g("person"),g("family"),start,end,g("venue"),g("area"),fmtSlots(readSlots($("#e-menSlots"))),g("wvenue"),fmtSlots(readSlots($("#e-womenSlots"))),g("contact"),g("map"),g("notes")];
-  if(admin.pin&&state.events.some(x=>x.person.trim()===row[1].trim()&&x.startDate===row[3])){setNote("«"+row[1]+"» مسجّلة مسبقاً بنفس التاريخ "+row[3]+"، فلم أكررها. لتغيير شيء فيها استخدم زر «تعديل» في بطاقتها.");closeSheet();toast("المناسبة موجودة مسبقاً");return}
-  if(admin.pin){const b=$("#e-save");b.disabled=true;try{row.push(await photoFrom($("#e-file"),g("photo")),reason);await saveRow("events",row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
-  const lines=linesFor(EV_TITLE,EV_COLS,row);if(reason)lines.push("سبب العشاء: "+reason);showSend(lines)});
+  let burial="",cem="";
+  if(state.kind==="condolence"){if($("#e-b2").checked)burial="بانتظار وصول الجثمان (الوفاة خارج الكويت)";
+    else{cem=$("#e-bcem").value==="other"?g("bcemOther"):g("bcem");burial=[g("bdate"),g("btime"),cem?"مقبرة "+cem:""].filter(Boolean).join(" · ")}}
+  const atCem=state.kind==="condolence"&&$("#e-mp1").checked;
+  const venue=atCem?(cem?"في مقبرة "+cem:"في المقبرة"):g("venue"),area=atCem?"":g("area");
+  const old=evEditing;const menT=fmtSlots(readSlots($("#e-menSlots")))||(old?old.menTime:""),womenT=fmtSlots(readSlots($("#e-womenSlots")))||(old?old.womenTime:"");
+  const row=[kindLabel,g("person"),g("family"),start,end,venue,area,menT,g("wvenue"),womenT,g("contact"),g("map"),g("notes")];
+  if(admin.pin&&state.events.some(x=>x!==old&&x.person.trim()===row[1].trim()&&x.startDate===row[3])){setNote("«"+row[1]+"» مسجّلة مسبقاً بنفس التاريخ "+row[3]+"، فلم أكررها. لتغيير شيء فيها استخدم زر «تعديل» في بطاقتها.");closeSheet();toast("المناسبة موجودة مسبقاً");return}
+  if(admin.pin){const b=$("#e-save");b.disabled=true;try{row.push(await photoFrom($("#e-file"),g("photo")),reason,burial);
+      if(old){await api({action:"update",sheet:"events",rowNum:old._row,expect:old.raw[1],row});const rr=row.slice();rr._row=old._row;const k=state.events.indexOf(old);if(k>=0)state.events[k]=rowToEvent(rr);evEditing=null;closeSheet();renderEvents();toast("تم حفظ التعديل")}
+      else await saveRow("events",row)}
+    catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}return}
+  const lines=linesFor(EV_TITLE,EV_COLS,row);if(reason)lines.push("سبب العشاء: "+reason);if(burial)lines.push("الدفن: "+burial);showSend(lines)});
 $("#diwForm").addEventListener("submit",async e=>{e.preventDefault();backTo="d";const g=f=>$("#d-"+f).value.trim();
   const days=[...document.querySelectorAll("#d-days input:checked")].map(x=>DAYS[Number(x.value)]);
   if(g("phone")&&!dupGate("diwaniyas",g("phone"),null,$("#d-dup")))return;
@@ -856,13 +922,13 @@ $("#pasteGo").addEventListener("click",()=>{const t=$("#paste-in").value;const k
   if(!kind){$("#pasteErr").hidden=false;return}
   if(kind==="services"){openSvForm(null,{name:kv["الاسم"],crafts:splitCrafts(kv["المهنة"]),phone:kv["الهاتف"],areas:kv["يخدم مناطق"],notes:kv["ملاحظات"],mapUrl:kv["رابط الموقع"]});return}
   const box=$("#reviewFields");box.replaceChildren();const add=(label,val,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:label}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف/.test(label)?"ltr":"auto"}),{value:val||""}))};
-  if(kind==="events"||kind==="diwaniyas"||kind==="ads"||kind==="services"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);if(kind==="events")add("سبب العشاء",kv["سبب العشاء"],cols.length+1);note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":kind==="ads"?"طلب إعلان. راجع البيانات، والتواريخ بصيغة 2026-11-06 أو «دائم» في «إلى تاريخ»، ويمكنك اختيار صورة الإعلان.":kind==="services"?"طلب خدمة. راجع الاسم والمهنة والرقم قبل الحفظ.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
+  if(kind==="events"||kind==="diwaniyas"||kind==="ads"||kind==="services"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);if(kind==="events"){add("سبب العشاء",kv["سبب العشاء"],cols.length+1);add("الدفن",kv["الدفن"],cols.length+2)}note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":kind==="ads"?"طلب إعلان. راجع البيانات، والتواريخ بصيغة 2026-11-06 أو «دائم» في «إلى تاريخ»، ويمكنك اختيار صورة الإعلان.":kind==="services"?"طلب خدمة. راجع الاسم والمهنة والرقم قبل الحفظ.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
   else{add("اسم الديوان",kv["اسم الديوان"],0);
     if(kind==="apology"){const v=kv["اعتذار"]||"";const dt=(toLatin(v).match(/\d{4}-\d{2}-\d{2}/)||[""])[0];add("اعتذار",/متوقف/.test(v)?"متوقف":dt,1);add("سبب الاعتذار",kv["سبب الاعتذار"],2);note="طلب اعتذار. اكتب التاريخ بصيغة 2026-11-06 أو كلمة متوقف."}
     else note="طلب إلغاء اعتذار: سيُمسح الاعتذار ويعود الديوان طبيعياً."}
   pending=kind;$("#reviewDel").hidden=true;$("#delConfirm").hidden=true;$("#rv-file").value="";$("#rv-logo").value="";$("#rv-logoRow").hidden=kind!=="diwaniyas";$("#rv-file").closest(".field").hidden=!(kind==="events"||kind==="diwaniyas"||kind==="ads"||kind==="services");$("#reviewNote").textContent=note;openSheet("مراجعة الطلب","r")});
 let editing=null;
-const DIW_EDIT=DIW_COLS.concat(["اعتذار","سبب الاعتذار","رابط الصورة","رابط الشعار"]),EV_EDIT=EV_COLS.concat(["رابط الصورة","سبب العشاء"]);
+const DIW_EDIT=DIW_COLS.concat(["اعتذار","سبب الاعتذار","رابط الصورة","رابط الشعار"]),EV_EDIT=EV_COLS.concat(["رابط الصورة","سبب العشاء","الدفن"]);
 const AD_EDIT=AD_COLS.concat(["رابط الصورة"]),SV_EDIT=SV_COLS.concat(["رابط الصورة"]);const colsOf=sheet=>sheet==="events"?EV_EDIT:sheet==="ads"?AD_EDIT:sheet==="services"?SV_EDIT:DIW_EDIT;
 function openEdit(sheet,rec){editing={sheet,rec};pending="edit";const cols=colsOf(sheet);const box=$("#reviewFields");box.replaceChildren();
   cols.forEach((c,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:c}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف|اعتذار$/.test(c)?"ltr":"auto"}),{value:(rec.raw&&rec.raw[i])||""}))});
@@ -888,7 +954,7 @@ $("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFie
       await api({action:"update",sheet,rowNum:rec._row,expect:keyOf(sheet,rec),row,...meta(sheet)});const rr=row.slice();rr._row=rec._row;
       const list=listOf(sheet);const k=list.indexOf(rec);if(k>=0)list[k]=mapRow(sheet,rr);
       closeSheet();renderAll();toast("تم حفظ التعديل")}
-    else if(pending==="events"){const row=vals.slice(0,13);row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4];row.push(await photoFrom($("#rv-file"),vals[13]),vals[14]||"");await saveRow("events",row)}
+    else if(pending==="events"){const row=vals.slice(0,13);row[3]=normDate(row[3])||row[3];row[4]=normDate(row[4])||row[4];row.push(await photoFrom($("#rv-file"),vals[13]),vals[14]||"",vals[15]||"");await saveRow("events",row)}
     else if(pending==="diwaniyas"){const row=vals.slice(0,9);row.push("","",await photoFrom($("#rv-file"),vals[9]),await photoFrom($("#rv-logo"),""));await saveRow("diwaniyas",row)}
     else if(pending==="services"){const row=vals.slice(0,6);row[2]=toLatin(row[2]).replace(/[^\d+]/g,"");row.push(await photoFrom($("#rv-file"),vals[6]));await saveRow("services",row)}
     else if(pending==="ads"){const row=vals.slice(0,10);row[2]=normDate(row[2])||row[2];row[3]=isPerm(row[3])?"دائم":(normDate(row[3])||row[2]);if(!row[2])row[2]=todayStr();row.push(await photoFrom($("#rv-file"),vals[10]));await saveRow("ads",row)}
@@ -907,7 +973,7 @@ $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("ch
 /* ---------- load ---------- */
 function rowToDiw(r){return{name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),street:r[3]||"",days:parseDays(r[4]),hours:r[5]||"",phone:toLatin(r[6]),mapUrl:r[7]||"",notes:r[8]||"",...parseApology(r[9],r[10]),photo:r[11]||"",logo:r[12]||"",_row:r._row,raw:Array.from({length:13},(_,k)=>r[k]||"")}}
 function rowToEvent(r){const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
-  return{kind:/عزا/.test(r[0]||"")?"condolence":/عشا|عزيم|غدا/.test(r[0]||"")?"dinner":"wedding",reason:r[14]||"",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||"",_row:r._row,raw:Array.from({length:15},(_,k)=>r[k]||"")}}
+  return{kind:/عزا/.test(r[0]||"")?"condolence":/عشا|عزيم|غدا/.test(r[0]||"")?"dinner":"wedding",reason:r[14]||"",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||"",burial:r[15]||"",_row:r._row,raw:Array.from({length:16},(_,k)=>r[k]||"")}}
 state.ads=[];state.sv=[];state.loaded.a=state.loaded.v=false;applyAdmin();renderAll();try{$("#yr").textContent=String(Math.max(2026,new Date().getFullYear()))}catch(e){}
 async function loadLive(){if(!apiReady())throw new Error("no api");const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),9000);
   try{let q="?t="+Date.now();if(!admin.pin){q+="&hit=1";try{if(!localStorage.getItem("wafra-seen")){q+="&nv=1";localStorage.setItem("wafra-seen","1")}}catch(x){}}
