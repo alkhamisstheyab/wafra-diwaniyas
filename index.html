@@ -256,7 +256,7 @@ form{display:flex;flex-direction:column;gap:12px}
         <div class="seg" role="group" aria-label="نوع المناسبة">
           <button data-f="all" aria-pressed="true">الكل</button>
           <button data-f="wedding" aria-pressed="false">أفراح</button>
-          <button data-f="dinner" aria-pressed="false">عشاء</button>
+          <button data-f="dinner" aria-pressed="false">دعوات</button>
           <button data-f="condolence" aria-pressed="false">تعازي</button>
         </div>
         <span class="grow"></span>
@@ -313,12 +313,17 @@ form{display:flex;flex-direction:column;gap:12px}
         <div class="seg" role="group" id="kindSeg">
           <button type="button" data-k="condolence" aria-pressed="true">عزاء</button>
           <button type="button" data-k="wedding" aria-pressed="false">فرح / زواج</button>
-          <button type="button" data-k="dinner" aria-pressed="false">عشاء</button>
+          <button type="button" data-k="dinner" aria-pressed="false">دعوة</button>
         </div>
       </div>
       <div class="field"><label for="e-person" id="e-person-l">اسم المتوفى</label><input id="e-person" required></div>
       <div class="field"><label for="e-family">العائلة</label><input id="e-family" placeholder="مثال: الخميس"></div>
-      <div class="field" id="e-reasonRow" hidden><label for="e-reason">سبب العشاء (المناسبة)</label><input id="e-reason" list="reasonList" placeholder="اختر أو اكتب السبب"></div>
+      <div class="two" id="e-itypeRow" hidden>
+        <div class="field"><label for="e-itype">نوع الدعوة</label><select id="e-itype"><option value="">— اختر —</option><option>ريوق</option><option>غداء</option><option>عشاء</option><option>القهوة</option><option>ريوق العيد</option><option>غداء العيد</option><option>عشاء العيد</option><option value="other">نوع آخر</option></select></div>
+        <div class="field" id="e-itypeOtherRow" hidden><label for="e-itypeOther">اكتب نوع الدعوة</label><input id="e-itypeOther"></div>
+      </div>
+      <p class="hijri" id="e-inviteNote" hidden style="margin:0">الدعوة لمرة واحدة، وتختفي من التطبيق تلقائياً بانتهاء وقتها: بعد العصر تنتهي بأذان المغرب، وبعد المغرب بأذان العشاء، وهكذا.</p>
+      <div class="field" id="e-reasonRow" hidden><label for="e-reason">سبب الدعوة (المناسبة)</label><input id="e-reason" list="reasonList" placeholder="اختر أو اكتب السبب"></div>
       <datalist id="reasonList"><option value="عودة من الحج"><option value="عودة من العمرة"><option value="تخرّج"><option value="ترقية"><option value="شفاء وسلامة"><option value="قدوم مولود"><option value="عودة من السفر"><option value="منزل جديد"><option value="ملكة (عقد قران)"><option value="نجاح"><option value="وفاء بنذر"></datalist>
       <div class="field" id="e-burialBox"><span class="lbl">الدفن</span>
         <div class="daypick">
@@ -521,10 +526,34 @@ try{fmtLong=new Intl.DateTimeFormat("ar-KW-u-nu-latn",{weekday:"long",day:"numer
 try{fmtMonth=new Intl.DateTimeFormat("ar-KW-u-nu-latn",{month:"long"});}catch(e){fmtMonth={format:d=>d.getMonth()+1}}
 try{fmtHijri=new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn",{day:"numeric",month:"long",year:"numeric"});}catch(e){fmtHijri=null}
 const hijri=s=>fmtHijri?fmtHijri.format(parse(s)):"";
-function status(ev){const t=todayStr();const end=ev.endDate||ev.startDate;if(end<t)return"past";if(ev.startDate<=t)return"now";return"soon"}
+/* prayer times for Al-Wafra, Kuwait (Fajr 18°, Isha 17.5°, standard Asr); minutes after local midnight */
+function prayerTimes(iso){const [Y,M,D]=iso.split("-").map(Number);const lat=28.64,lng=47.93,tz=3;
+  const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI,fix=(a,b)=>{a=a-b*Math.floor(a/b);return a<0?a+b:a};
+  const sin=x=>Math.sin(rad(x)),cos=x=>Math.cos(rad(x)),tan=x=>Math.tan(rad(x)),asin=x=>deg(Math.asin(x)),acos=x=>deg(Math.acos(Math.max(-1,Math.min(1,x)))),atan2=(y,x)=>deg(Math.atan2(y,x)),acot=x=>deg(Math.atan(1/x));
+  let y=Y,m=M;if(m<=2){y-=1;m+=12}const A=Math.floor(y/100),B=2-A+Math.floor(A/4);const jd=Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+D+B-1524.5-lng/(15*24);
+  const sun=t=>{const d=jd+t-2451545.0,g=fix(357.529+0.98560028*d,360),q=fix(280.459+0.98564736*d,360),L=fix(q+1.915*sin(g)+0.020*sin(2*g),360),e=23.439-0.00000036*d;
+    const RA=atan2(cos(e)*sin(L),cos(L))/15;return{decl:asin(sin(e)*sin(L)),eqt:q/15-fix(RA,24)}};
+  const noon=t=>fix(12-sun(t).eqt,24);
+  const angleT=(a,t,ccw)=>{const dc=sun(t).decl,T=acos((-sin(a)-sin(dc)*sin(lat))/(cos(dc)*cos(lat)))/15;return noon(t)+(ccw?-T:T)};
+  const asrT=t=>{const dc=sun(t).decl;return angleT(-acot(1+tan(Math.abs(lat-dc))),t)};
+  const h={fajr:angleT(18,5/24,true),sunrise:angleT(0.833,6/24,true),dhuhr:noon(12/24),asr:asrT(13/24),maghrib:angleT(0.833,18/24),isha:angleT(17.5,18/24)};
+  const out={};for(const k in h)out[k]=Math.round((h[k]+tz-lng/15)*60);return out}
+const PT_CACHE={};const ptOf=d=>PT_CACHE[d]||(PT_CACHE[d]=prayerTimes(d));
+/* a one-time invitation ends when the next prayer after its time begins (minutes after midnight) */
+function inviteEndMin(ev){const p=ptOf(ev.startDate);const segs=[ev.menTime,ev.womenTime].join(" و").split(/ و/).map(x=>x.trim()).filter(Boolean);
+  if(!segs.length)return 24*60;let end=0;
+  for(const g of segs){const to=(toLatin(g).match(/إلى\s+(\d{1,2})/)||[])[1];let e;
+    if(/الفجر/.test(g))e=p.dhuhr;else if(/الظهر/.test(g))e=p.asr;else if(/بعد صلاة العصر/.test(g))e=p.maghrib;else if(/المغرب/.test(g))e=p.isha;else if(/العشاء/.test(g))e=24*60;
+    else if(/صباح/.test(g))e=to?(+to===12?720:+to*60):p.dhuhr;else if(/عصر|مساء/.test(g))e=to?((+to<12?+to+12:+to)*60):p.maghrib;else e=24*60;end=Math.max(end,e)}
+  return end||24*60}
+function inviteOver(ev){const t=todayStr();if(ev.startDate<t)return true;if(ev.startDate>t)return false;const n=new Date();return n.getHours()*60+n.getMinutes()>=inviteEndMin(ev)}
+function status(ev){const t=todayStr();if(ev.kind==="dinner"&&ev.startDate){if(inviteOver(ev))return"past";return ev.startDate===t?"now":"soon"}
+  const end=ev.endDate||ev.startDate;if(end<t)return"past";if(ev.startDate<=t)return"now";return"soon"}
+const itypeOf=ev=>ev.itype||"عشاء";
+const inviteWord=t=>/^(ال|ريوق العيد|غداء العيد|عشاء العيد)/.test(t)?t:"ال"+t;
 $("#todayLine").textContent=fmtLong.format(new Date())+(fmtHijri?" · "+fmtHijri.format(new Date()):"");
 
-const PERIODS=[["am","صباحاً"],["pm","عصراً"],["maghrib","بعد صلاة المغرب"],["isha","بعد صلاة العشاء"]];
+const PERIODS=[["fajr","بعد صلاة الفجر"],["am","صباحاً"],["dhuhr","بعد صلاة الظهر"],["asr","بعد صلاة العصر"],["pm","عصراً"],["maghrib","بعد صلاة المغرب"],["isha","بعد صلاة العشاء"]];
 const PL=Object.fromEntries(PERIODS);const hasHour=p=>p==="am"||p==="pm";
 function fmtSlot(x){if(!x||!x.p)return"";let t=PL[x.p]||"";if(hasHour(x.p)&&x.from)t+=x.to?" من الساعة "+x.from+" إلى "+x.to:" الساعة "+x.from;return t}
 const fmtSlots=a=>(a||[]).map(fmtSlot).filter(Boolean).join(" و");
@@ -593,12 +622,12 @@ function whenPhrase(ev){const t=todayStr();
   if(ev.kind==="condolence")return "";
   return ev.startDate===t?"اليوم":"مستمر حتى "+fmtLong.format(parse(ev.endDate))}
 function announce(ev,mode){const L=[];
-  if(mode==="remind"){const w=whenPhrase(ev);L.push("🔔 "+(ev.kind==="condolence"?"تذكير بالعزاء":ev.kind==="dinner"?"تذكير بدعوة العشاء":"تذكير بحفل الزواج")+(w?" — "+w:""),"")}const range=ev.endDate&&ev.endDate!==ev.startDate?("من "+fmtLong.format(parse(ev.startDate))+" إلى "+fmtLong.format(parse(ev.endDate))):fmtLong.format(parse(ev.startDate));
+  if(mode==="remind"){const w=whenPhrase(ev);L.push("🔔 "+(ev.kind==="condolence"?"تذكير بالعزاء":ev.kind==="dinner"?"تذكير بدعوة "+inviteWord(itypeOf(ev)):"تذكير بحفل الزواج")+(w?" — "+w:""),"")}const range=ev.endDate&&ev.endDate!==ev.startDate?("من "+fmtLong.format(parse(ev.startDate))+" إلى "+fmtLong.format(parse(ev.endDate))):fmtLong.format(parse(ev.startDate));
   const who=ev.person+(ev.family&&!ev.person.includes(ev.family)?" "+ev.family:"");
   if(ev.kind==="condolence"){const fp=famPhrase(ev.family);if(fp)L.push("🤲 عزاء "+fp);L.push("انتقل إلى رحمة الله تعالى: "+ev.person);
     if(ev.burial)L.push("⚰️ "+(isWaiting(ev.burial)?"":"الدفن: ")+prettyBurial(ev.burial));
     if(ev.venue||ev.area)L.push("العزاء للرجال: "+[ev.venue,ev.area].filter(Boolean).join("، "));if(ev.menTime)L.push("الوقت: "+ev.menTime);if(ev.womenVenue||ev.womenTime)L.push("العزاء للنساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
-  else if(ev.kind==="dinner"){L.push("🍽️ يتشرف "+who+" بدعوتكم لحضور العشاء"+(ev.reason?" بمناسبة "+ev.reason:""));L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
+  else if(ev.kind==="dinner"){L.push((/قهو/.test(itypeOf(ev))?"☕":"🍽️")+" يتشرف "+who+" بدعوتكم لحضور "+inviteWord(itypeOf(ev))+(ev.reason?" بمناسبة "+ev.reason:""));L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   else{L.push("حفل زواج: "+who);L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · الرجال: "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   if(ev.contact)L.push("للتواصل: "+ev.contact);if(safeUrl(ev.mapUrl))L.push("الموقع: "+ev.mapUrl);if(ev.notes)L.push(ev.notes);
   L.push(ev.kind==="condolence"?"إنا لله وإنا إليه راجعون":ev.kind==="dinner"?"حيّاكم الله 🤍":"بارك الله لهما وبارك عليهما وجمع بينهما في خير");
@@ -611,7 +640,7 @@ function eventCard(ev){const st=status(ev);const d=parse(ev.startDate);const isC
   if(!isC)add("التاريخ",ev.endDate&&ev.endDate!==ev.startDate?fmtLong.format(d)+" ← "+fmtLong.format(parse(ev.endDate)):fmtLong.format(d));
   add(isC?"الرجال":"المكان",[ev.venue,ev.area].filter(Boolean).join("، ")+(ev.menTime?" · "+ev.menTime:""));
   add("النساء",[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "));add("التواصل",ev.contact,"mono");add("ملاحظات",ev.notes);
-  const chips=el("div",{class:"row"},el("span",{class:"chip kind",text:isC?"عزاء":isD?"عشاء":"فرح"}),
+  const chips=el("div",{class:"row"},el("span",{class:"chip kind",text:isC?"عزاء":isD?"دعوة "+itypeOf(ev):"فرح"}),
     st==="now"?el("span",{class:"chip now",text:ev.startDate===todayStr()&&ev.endDate===ev.startDate?"اليوم":"جارٍ الآن"}):null,
     st==="soon"?el("span",{class:"chip soft",text:"قادم"}):null,st==="past"?el("span",{class:"chip soft",text:"انتهى"}):null,
     isC&&isWaiting(ev.burial)?el("span",{class:"chip soft",text:"بانتظار وصول الجثمان"}):null,
@@ -629,13 +658,13 @@ function eventCard(ev){const st=status(ev);const d=parse(ev.startDate);const isC
   return el("article",{class:"card "+(isC?"k-condolence":isD?"k-dinner":"k-wedding")+(st==="past"?" past":""),id:"ev-"+evKey(ev.startDate,ev.person)},
     photoEl(ev.photo,ev.person),
     el("div",{class:"datebox"},el("b",{text:String(d.getDate())}),el("span",{text:fmtMonth.format(d)})),
-    el("div",{class:"body"},chips,el("h3",{text:(isC?"عزاء المرحوم/ة ":isD?"عشاء ":"زواج ")+ev.person}),isC?el("div",{class:"verse",text:"إنا لله وإنا إليه راجعون"}):null,isD&&ev.reason?el("div",{class:"reason",text:"بمناسبة "+ev.reason}):null,
+    el("div",{class:"body"},chips,el("h3",{text:(isC?"عزاء المرحوم/ة ":isD?"دعوة "+itypeOf(ev)+": ":"زواج ")+ev.person}),isC?el("div",{class:"verse",text:"إنا لله وإنا إليه راجعون"}):null,isD&&ev.reason?el("div",{class:"reason",text:"بمناسبة "+ev.reason}):null,
       el("div",{class:"hijri",text:hijri(ev.startDate)}),facts,actions))}
 function renderEvents(){const out=$("#eventsOut");out.replaceChildren();const t=todayStr(),cut=addDays(t,-14);
   const list=state.events.filter(e=>state.filter==="all"||e.kind===state.filter);
   const now=list.filter(e=>status(e)==="now").sort((a,b)=>a.startDate.localeCompare(b.startDate));
   const soon=list.filter(e=>status(e)==="soon").sort((a,b)=>a.startDate.localeCompare(b.startDate));
-  const past=list.filter(e=>status(e)==="past"&&e.endDate>=cut).sort((a,b)=>b.startDate.localeCompare(a.startDate));
+  const past=list.filter(e=>e.kind!=="dinner"&&status(e)==="past"&&e.endDate>=cut).sort((a,b)=>b.startDate.localeCompare(a.startDate));
   $("#nEvents").textContent=state.events.filter(e=>status(e)!=="past").length;
   if(!state.loaded.e){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل المناسبات…"})));return}
   if(!now.length&&!soon.length&&!past.length){out.append(el("div",{class:"empty"},el("strong",{text:state.filter==="wedding"?"لا توجد أفراح مسجّلة":state.filter==="dinner"?"لا توجد دعوات عشاء مسجّلة":state.filter==="condolence"?"لا توجد تعازي مسجّلة":"لا توجد مناسبات حالياً"}),"لإضافة عزاء أو فرح أو دعوة عشاء، اضغط «أرسل مناسبة» وستُضاف بعد المراجعة."));return}
@@ -691,14 +720,15 @@ document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("#light
 $("#lbClose").addEventListener("click",closePhoto);$("#lightbox").addEventListener("click",e=>{if(e.target.id==="lightbox")closePhoto()});
 function setKind(k){state.kind=k;document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.k===k)));
   const c=k==="condolence",dn=k==="dinner";$("#e-person-l").textContent=c?"اسم المتوفى":dn?"صاحب الدعوة":"اسم العريس (أو المناسبة)";
-  $("#e-venue-l").textContent=c?"اسم مكان العزاء (ديوان أو صالة أو منزل)":dn?"مكان العشاء":"مكان الحفل";$("#e-mentime-l").textContent=c?"وقت العزاء للرجال":dn?"وقت العشاء":"وقت الحفل للرجال";$("#e-reasonRow").hidden=!dn;
-  document.querySelector('label[for="e-start"]').textContent=c?"أول أيام العزاء (يظهر ثلاثة أيام)":"من تاريخ";$("#e-end").closest(".field").hidden=c;document.querySelector('label[for="e-end"]').textContent=c?"إلى":"إلى تاريخ";
+  $("#e-venue-l").textContent=c?"اسم مكان العزاء (ديوان أو صالة أو منزل)":dn?"مكان الدعوة":"مكان الحفل";$("#e-itypeRow").hidden=!dn;$("#e-inviteNote").hidden=!dn;$("#e-mentime-l").textContent=c?"وقت العزاء للرجال":dn?"وقت الدعوة":"وقت الحفل للرجال";$("#e-reasonRow").hidden=!dn;
+  document.querySelector('label[for="e-start"]').textContent=c?"أول أيام العزاء (يظهر ثلاثة أيام)":"من تاريخ";$("#e-end").closest(".field").hidden=c||dn;document.querySelector('label[for="e-end"]').textContent=c?"إلى":"إلى تاريخ";
   $("#e-burialBox").hidden=!c;$("#e-menPlaceRow").hidden=!c;syncMenPlace()}
 function syncMenPlace(){$("#e-venueBox").hidden=state.kind==="condolence"&&$("#e-mp1").checked}
 function syncBurial(){$("#e-bset").hidden=$("#e-b2").checked;$("#e-bcemOtherRow").hidden=$("#e-bcem").value!=="other"}
 document.querySelectorAll('input[name="e-mplace"]').forEach(x=>x.addEventListener("change",syncMenPlace));
 document.querySelectorAll('input[name="e-bmode"]').forEach(x=>x.addEventListener("change",syncBurial));
 $("#e-bcem").addEventListener("change",syncBurial);
+$("#e-itype").addEventListener("change",()=>{$("#e-itypeOtherRow").hidden=$("#e-itype").value!=="other"});
 document.querySelectorAll("#kindSeg button").forEach(b=>b.addEventListener("click",()=>{setKind(b.dataset.k);const st=$("#e-start");if(b.dataset.k!=="condolence"&&st.value===todayStr())st.value="";if(b.dataset.k==="condolence"&&!st.value)st.value=todayStr()}));
 function slotEditor(box){box.replaceChildren();const id=box.id;let n=0;
   const addRow=()=>{const i=n++;const opt=(v,t)=>el("option",{value:v,text:t});
@@ -712,11 +742,12 @@ function readSlots(box){return[...box.querySelectorAll(":scope > .slot")].map(r=
 function buildDayPick(){$("#d-days").replaceChildren(...DAYS.map((n,i)=>el("label",{},el("input",{type:"checkbox",id:"dd-"+i,value:String(i)}),n)))}
 let evEditing=null;
 let evPrefill={};
-function openEventForm(ev){evEditing=ev||null;evPrefill={};$("#eventForm").reset();$("#e-delConfirm").hidden=true;
+function openEventForm(ev){evEditing=ev||null;evPrefill={};$("#e-itypeOtherRow").hidden=true;$("#eventForm").reset();$("#e-delConfirm").hidden=true;
   setKind(ev?ev.kind:(state.filter==="wedding"||state.filter==="dinner"?state.filter:"condolence"));slotEditor($("#e-menSlots"));slotEditor($("#e-womenSlots"));
   $("#e-start").value=state.kind==="condolence"?todayStr():"";$("#e-bdate").value=todayStr();$("#e-oldTimes").hidden=true;
   if(ev){const set=(id,v)=>{$("#e-"+id).value=v||""};set("person",ev.person);set("family",ev.family);set("start",ev.startDate);set("end",ev.endDate);
     set("wvenue",ev.womenVenue);set("contact",ev.contact);set("map",ev.mapUrl);set("notes",ev.notes);set("reason",ev.reason);set("photo",ev.photo);
+    if(ev.kind==="dinner"){const it=itypeOf(ev);if([...$("#e-itype").options].some(o=>o.value===it))$("#e-itype").value=it;else{$("#e-itype").value="other";$("#e-itypeOther").value=it}}
     if(ev.kind==="condolence"&&/مقبرة/.test(ev.venue)&&!ev.area){$("#e-mp1").checked=true}else{set("venue",ev.venue);set("area",ev.area)}
     const b=parseBurial(ev.burial);if(b.wait)$("#e-b2").checked=true;if(b.date)$("#e-bdate").value=b.date;$("#e-btime").value=b.time;
     if(b.cem){if(CEMS.includes(b.cem))$("#e-bcem").value=b.cem;else{$("#e-bcem").value="other";$("#e-bcemOther").value=b.cem}}
@@ -843,7 +874,8 @@ function showSend(lines){lastSend=lines.filter(x=>x!=null).join("\n");$("#sendTe
 let backTo="d";
 $("#eventForm").addEventListener("submit",async e=>{e.preventDefault();backTo="e";const g=f=>$("#e-"+f).value.trim();
   let start=g("start"),end=g("end");if(state.kind==="condolence")end=addDays(start,2);else if(!end)end=start;if(end<start)end=start;
-  const kindLabel={condolence:"عزاء",wedding:"فرح",dinner:"عشاء"}[state.kind];const reason=state.kind==="dinner"?g("reason"):"";
+  const itype=$("#e-itype").value==="other"?g("itypeOther"):g("itype");if(state.kind==="dinner"&&!itype){toast("اختر نوع الدعوة");return}if(state.kind==="dinner")end=start;
+  const kindLabel={condolence:"عزاء",wedding:"فرح",dinner:"دعوة "+itype}[state.kind];const reason=state.kind==="dinner"?g("reason"):"";
   let burial="",cem="";
   if(state.kind==="condolence"){if($("#e-b2").checked)burial="بانتظار وصول الجثمان (الوفاة خارج الكويت)";
     else{cem=$("#e-bcem").value==="other"?g("bcemOther"):g("bcem");burial=[g("bdate"),g("btime"),cem?"مقبرة "+cem:""].filter(Boolean).join(" · ")}}
@@ -856,7 +888,7 @@ $("#eventForm").addEventListener("submit",async e=>{e.preventDefault();backTo="e
       if(old){await api({action:"update",sheet:"events",rowNum:old._row,expect:old.raw[1],row});const rr=row.slice();rr._row=old._row;const k=state.events.indexOf(old);if(k>=0)state.events[k]=rowToEvent(rr);evEditing=null;closeSheet();renderEvents();toast("تم حفظ التعديل")}
       else await saveRow("events",row)}
     catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}return}
-  const lines=linesFor(EV_TITLE,EV_COLS,row);if(reason)lines.push("سبب العشاء: "+reason);if(burial)lines.push("الدفن: "+burial);showSend(lines)});
+  const lines=linesFor(EV_TITLE,EV_COLS,row);if(reason)lines.push("سبب الدعوة: "+reason);if(burial)lines.push("الدفن: "+burial);showSend(lines)});
 $("#diwForm").addEventListener("submit",async e=>{e.preventDefault();backTo="d";const g=f=>$("#d-"+f).value.trim();
   const days=[...document.querySelectorAll("#d-days input:checked")].map(x=>DAYS[Number(x.value)]);
   if(g("phone")&&!dupGate("diwaniyas",g("phone"),null,$("#d-dup")))return;
@@ -1041,13 +1073,13 @@ $("#pasteGo").addEventListener("click",()=>{const t=$("#paste-in").value;const k
   if(!kind){$("#pasteErr").hidden=false;return}
   if(kind==="services"){openSvForm(null,{name:kv["الاسم"],crafts:splitCrafts(kv["المهنة"]),phone:kv["الهاتف"],areas:kv["يخدم مناطق"],notes:kv["ملاحظات"],mapUrl:kv["رابط الموقع"]});return}
   const box=$("#reviewFields");box.replaceChildren();const add=(label,val,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:label}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف/.test(label)?"ltr":"auto"}),{value:val||""}))};
-  if(kind==="events"||kind==="diwaniyas"||kind==="ads"||kind==="services"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);if(kind==="ads")add("رابط الفيديو",kv["رابط الفيديو"],cols.length+1);if(kind==="events"){add("سبب العشاء",kv["سبب العشاء"],cols.length+1);add("الدفن",kv["الدفن"],cols.length+2)}note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":kind==="ads"?"طلب إعلان. راجع البيانات، والتواريخ بصيغة 2026-11-06 أو «دائم» في «إلى تاريخ»، ويمكنك اختيار صورة الإعلان.":kind==="services"?"طلب خدمة. راجع الاسم والمهنة والرقم قبل الحفظ.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
+  if(kind==="events"||kind==="diwaniyas"||kind==="ads"||kind==="services"){cols.forEach((c,i)=>add(c,kv[c],i));add("رابط الصورة","",cols.length);if(kind==="ads")add("رابط الفيديو",kv["رابط الفيديو"],cols.length+1);if(kind==="events"){add("سبب الدعوة",kv["سبب الدعوة"]||kv["سبب العشاء"],cols.length+1);add("الدفن",kv["الدفن"],cols.length+2)}note=kind==="events"?"طلب مناسبة. راجع البيانات، ويمكنك إضافة رابط صورة.":kind==="ads"?"طلب إعلان. راجع البيانات، والتواريخ بصيغة 2026-11-06 أو «دائم» في «إلى تاريخ»، ويمكنك اختيار صورة الإعلان.":kind==="services"?"طلب خدمة. راجع الاسم والمهنة والرقم قبل الحفظ.":"طلب ديوان. راجع البيانات، ويمكنك إضافة رابط صورة."}
   else{add("اسم الديوان",kv["اسم الديوان"],0);
     if(kind==="apology"){const v=kv["اعتذار"]||"";const dt=(toLatin(v).match(/\d{4}-\d{2}-\d{2}/)||[""])[0];add("اعتذار",/متوقف/.test(v)?"متوقف":dt,1);add("سبب الاعتذار",kv["سبب الاعتذار"],2);note="طلب اعتذار. اكتب التاريخ بصيغة 2026-11-06 أو كلمة متوقف."}
     else note="طلب إلغاء اعتذار: سيُمسح الاعتذار ويعود الديوان طبيعياً."}
   pending=kind;$("#reviewDel").hidden=true;$("#delConfirm").hidden=true;$("#rv-file").value="";$("#rv-logo").value="";$("#rv-logoRow").hidden=kind!=="diwaniyas";$("#rv-vfile").value="";$("#rv-vRow").hidden=kind!=="ads";$("#rv-file").closest(".field").hidden=!(kind==="events"||kind==="diwaniyas"||kind==="ads"||kind==="services");$("#reviewNote").textContent=note;openSheet("مراجعة الطلب","r")});
 let editing=null;
-const DIW_EDIT=DIW_COLS.concat(["اعتذار","سبب الاعتذار","رابط الصورة","رابط الشعار"]),EV_EDIT=EV_COLS.concat(["رابط الصورة","سبب العشاء","الدفن"]);
+const DIW_EDIT=DIW_COLS.concat(["اعتذار","سبب الاعتذار","رابط الصورة","رابط الشعار"]),EV_EDIT=EV_COLS.concat(["رابط الصورة","سبب الدعوة","الدفن"]);
 const AD_EDIT=AD_COLS.concat(["رابط الصورة","رابط الفيديو"]),SV_EDIT=SV_COLS.concat(["رابط الصورة"]);const colsOf=sheet=>sheet==="events"?EV_EDIT:sheet==="ads"?AD_EDIT:sheet==="services"?SV_EDIT:DIW_EDIT;
 function openEdit(sheet,rec){editing={sheet,rec};pending="edit";const cols=colsOf(sheet);const box=$("#reviewFields");box.replaceChildren();
   cols.forEach((c,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:c}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف|اعتذار$/.test(c)?"ltr":"auto"}),{value:(rec.raw&&rec.raw[i])||""}))});
@@ -1094,7 +1126,8 @@ $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("ch
 function rowToDiw(r){return{name:r[0]||"",owner:r[1]||"",block:toLatin(r[2]),street:r[3]||"",days:parseDays(r[4]),hours:r[5]||"",phone:toLatin(r[6]),mapUrl:r[7]||"",notes:r[8]||"",...parseApology(r[9],r[10]),photo:r[11]||"",logo:r[12]||"",_row:r._row,raw:Array.from({length:13},(_,k)=>r[k]||"")}}
 function rowToEvent(r){const s=normDate(r[3]);let e=normDate(r[4])||s;if(e<s)e=s;
   if(/عزا/.test(r[0]||"")&&s)e=addDays(s,2); /* condolences always run three days */
-  return{kind:/عزا/.test(r[0]||"")?"condolence":/عشا|عزيم|غدا/.test(r[0]||"")?"dinner":"wedding",reason:r[14]||"",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||"",burial:r[15]||"",_row:r._row,raw:Array.from({length:16},(_,k)=>r[k]||"")}}
+  const k0=String(r[0]||"").trim();const isInv=/^دعوة|عشا|عزيم|غدا|ريوق|قهو/.test(k0)&&!/عزا/.test(k0);
+  return{kind:/عزا/.test(k0)?"condolence":isInv?"dinner":"wedding",itype:isInv?(k0.replace(/^دعوة\s*/,"").trim()||"عشاء"):"",reason:r[14]||"",person:r[1]||"",family:r[2]||"",startDate:s,endDate:e,venue:r[5]||"",area:r[6]||"",menTime:r[7]||"",womenVenue:r[8]||"",womenTime:r[9]||"",contact:toLatin(r[10]),mapUrl:r[11]||"",notes:r[12]||"",photo:r[13]||"",burial:r[15]||"",_row:r._row,raw:Array.from({length:16},(_,k)=>r[k]||"")}}
 state.ads=[];state.sv=[];state.loaded.a=state.loaded.v=false;applyAdmin();renderAll();/* pull down at the top of the page to reload */
 (function(){const ptr=$("#ptr"),icon=$("#ptrIcon"),txt=$("#ptrText");let y0=null,dy=0,busy=false;const LIM=80;
   const show=(d)=>{const k=Math.min(d,LIM*1.3);ptr.style.transform="translate(-50%,"+(k-70)+"px)";ptr.style.opacity=String(Math.min(1,d/LIM))};
