@@ -1142,12 +1142,14 @@ async function loadLive(){if(!apiReady())throw new Error("no api");const ctl=new
     const rows=list=>list.map(x=>{const r=x.v.map(v=>String(v==null?"":v).trim());r._row=x.row;return r}).filter(r=>r.some(Boolean));
     return{diw:rows(j.diwaniyas||[]),ev:rows(j.events||[]),ads:rows(j.ads||[]),sv:rows(j.services||[])}}finally{clearTimeout(t)}}
 function useRows(diwRows,evRows){state.diw=diwRows.map(rowToDiw).filter(d=>d.name);
-  const bad=[];state.events=evRows.map(r=>{const e=rowToEvent(r);if(!(e.person&&e.startDate))bad.push(r._row);return e}).filter(e=>e.person&&e.startDate);
+  const bad=[];state.events=evRows.map(r=>{const e=rowToEvent(r);if(!(e.person&&e.startDate))bad.push(e);return e}).filter(e=>e.person&&e.startDate);
   state.badRows=bad}
 function useSv(rows){state.sv=(rows||[]).map(rowToSv).filter(v=>v.name&&v.phone)}
 function useAds(rows){state.ads=(rows||[]).map(rowToAd).filter(a=>a.title&&a.startDate)}
-function adminChecks(){if(!admin.pin||!state.badRows||!state.badRows.length)return;
-  setNote("صفوف في ورقة المناسبات لا تظهر لأن الاسم أو التاريخ ناقص أو بصيغة غير مفهومة: الصف "+state.badRows.join("، ")+". افتح الجدول وصحّح التاريخ بصيغة 2026-11-06.")}
+function adminChecks(){if(!admin.pin||!state.badRows||!state.badRows.length)return;const n=$("#statusNote");
+  n.replaceChildren("في ورقة المناسبات صفوف لا تظهر في التطبيق لأن الاسم أو التاريخ ناقص أو مكتوب بصيغة غير مفهومة. اضغط على الصف لإصلاحه:",
+    el("div",{class:"actions",style:"margin-top:8px"},...state.badRows.map(e=>{const what=!e.person?"الاسم ناقص":"التاريخ ناقص";
+      return el("button",{class:"btn sm",type:"button",onclick:()=>{if(!e.startDate)e.startDate="";openEventForm(e)}},"الصف "+e._row+" · "+(e.person||e.raw[0]||"بدون اسم")+" · "+what)})));n.hidden=false}
 /* the sheet can be slow to wake up: give it a second try before using the backup copy */
 const slowNote=setTimeout(()=>{if(!state.loaded.e)toast("جارٍ تحميل البيانات…")},4000);
 loadLive().catch(()=>loadLive()).then(d=>{clearTimeout(slowNote);state.src="live";useRows(d.diw,d.ev);useAds(d.ads);useSv(d.sv)})
