@@ -625,7 +625,7 @@ function announce(ev,mode){const L=[];
   if(mode==="remind"){const w=whenPhrase(ev);L.push("🔔 "+(ev.kind==="condolence"?"تذكير بالعزاء":ev.kind==="dinner"?"تذكير بدعوة "+inviteWord(itypeOf(ev)):"تذكير بحفل الزواج")+(w?" — "+w:""),"")}const range=ev.endDate&&ev.endDate!==ev.startDate?("من "+fmtLong.format(parse(ev.startDate))+" إلى "+fmtLong.format(parse(ev.endDate))):fmtLong.format(parse(ev.startDate));
   const who=ev.person+(ev.family&&!ev.person.includes(ev.family)?" "+ev.family:"");
   if(ev.kind==="condolence"){const fp=famPhrase(ev.family);if(fp)L.push("🤲 عزاء "+fp);L.push("انتقل إلى رحمة الله تعالى: "+ev.person);
-    if(ev.burial)L.push("⚰️ "+(isWaiting(ev.burial)?"":"الدفن: ")+prettyBurial(ev.burial));
+    if(ev.burial)L.push((isWaiting(ev.burial)?"":"الدفن: ")+prettyBurial(ev.burial));
     if(ev.venue||ev.area)L.push("العزاء للرجال: "+[ev.venue,ev.area].filter(Boolean).join("، "));if(ev.menTime)L.push("الوقت: "+ev.menTime);if(ev.womenVenue||ev.womenTime)L.push("العزاء للنساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   else if(ev.kind==="dinner"){L.push((/قهو/.test(itypeOf(ev))?"☕":"🍽️")+" يتشرف "+who+" بدعوتكم لحضور "+inviteWord(itypeOf(ev))+(ev.reason?" بمناسبة "+ev.reason:""));L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
   else{L.push("حفل زواج: "+who);L.push("المكان: "+[ev.venue,ev.area].filter(Boolean).join("، "));L.push(range+(ev.menTime?" · الرجال: "+ev.menTime:""));if(ev.womenVenue||ev.womenTime)L.push("النساء: "+[ev.womenVenue,ev.womenTime].filter(Boolean).join(" · "))}
