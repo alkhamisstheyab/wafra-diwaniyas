@@ -608,7 +608,20 @@ async function shareText(text,photo,fname){const id=driveId(photo);
       if(navigator.canShare({files:[file]})){await navigator.share({files:[file],text});return}}}catch(e){if(e&&e.name==="AbortError")return}}
   if(navigator.share&&!id){try{await navigator.share({text});return}catch(e){if(e&&e.name==="AbortError")return}}
   location.href="https://wa.me/?text="+encodeURIComponent(text)}
-const shareDiw=d=>shareText(diwInvite(d),d.photo||d.logo,"دعوة ديوان.jpg");
+/* short invitations in the owner's own style */
+function diwNextDay(d){const t=todayStr();for(let i=0;i<14;i++){const day=addDays(t,i);const wd=parse(day).getDay();
+    if((!d.days.length||d.days.includes(wd))&&!d.offDates.includes(day))return i===0?"اليوم":i===1?"غداً":"يوم "+DAYS[wd]}return"اليوم"}
+function diwShort(d,mode){const when=diwNextDay(d),time=d.hours?" "+d.hours:"";
+  const L=mode==="back"?["السادة رواد "+d.name+" الكرام","","نعاود استقبالكم في ديوانكم "+when+time]:["حياكم "+when+" الديوانية"+time];
+  if(d.owner)L.push("","أخوكم",d.owner);if(safeUrl(d.mapUrl))L.push("",d.mapUrl);return L.join("\n")}
+const shareDiw=(d,mode)=>shareText(mode==="full"?diwInvite(d):diwShort(d,mode),d.photo||d.logo,"دعوة ديوان.jpg");
+function pickDiwShare(btn,d){const box=btn.closest(".actions");const old=box.parentNode.querySelector(".msgpick");if(old){old.remove();return}
+  const go=m=>{p.remove();shareDiw(d,m)};
+  const p=el("div",{class:"confirm msgpick"},"نوع الدعوة:",
+    el("button",{class:"btn sm",type:"button",onclick:()=>go("weekly")},"حياكم ("+diwNextDay(d)+")"),
+    el("button",{class:"btn sm",type:"button",onclick:()=>go("back")},"عودة بعد الاعتذار"),
+    el("button",{class:"btn sm",type:"button",onclick:()=>go("full")},"التفاصيل كاملة"),
+    el("button",{class:"btn sm ghost",type:"button",onclick:()=>p.remove()},"إلغاء"));box.after(p)}
 async function shareEvent(ev,mode){return shareText(announce(ev,mode),ev.photo,"دعوة.jpg")}
 /* family line and burial text for condolences */
 const famPhrase=f=>{f=String(f||"").trim();if(!f)return"";return /^(آل|ال\s|عائلة|أسرة)/.test(f)?f:"عائلة "+f};
@@ -694,7 +707,7 @@ function diwCard(d){const today=new Date().getDay();
     d.owner||addr?el("div",{class:"hijri",text:[d.owner,addr].filter(Boolean).join(" — ")}):null,ap,days,
     d.hours?el("div",{text:"الاستقبال: "+d.hours}):null,d.notes?el("div",{class:"hijri",text:d.notes}):null,
     el("div",{class:"actions"},d.phone?el("button",{class:"btn sm",onclick:e=>copy(d.phone,e.currentTarget)},el("span",{class:"mono",text:d.phone})," · نسخ"):null,
-      el("button",{class:"btn sm",type:"button",onclick:()=>shareDiw(d)},"دعوة واتساب"),
+      el("button",{class:"btn sm",type:"button",onclick:e=>pickDiwShare(e.currentTarget,d)},"دعوة واتساب"),
       safeUrl(d.mapUrl)?el("a",{class:"btn sm",href:d.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
       admin.pin&&d._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("diwaniyas",d)},"تعديل"):null,
       el("button",{class:"btn sm ghost",onclick:()=>openApology(d)},d.paused||d.offDates.length?"تعديل الاعتذار":(admin.pin?"تسجيل اعتذار":"اعتذار عن الاستقبال"))))}
