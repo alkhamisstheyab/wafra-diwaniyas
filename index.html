@@ -794,7 +794,7 @@ function applyAdmin(){const on=!!admin.pin;if(on)loadStats();else $("#adminStats
   $("#e-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";$("#d-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";
   const ap=$("#apologyForm button[type=submit]");if(ap)ap.textContent=on?"حفظ مباشرة":"متابعة للإرسال";renderDiw()}
 async function loadStats(){const box=$("#adminStats");if(!admin.pin){box.hidden=true;return}
-  try{const j=await api({action:"stats"});const week=j.days.reduce((a,x)=>a+x.n,0);const today=j.days[j.days.length-1].n;
+  try{const j=await api({action:"stats"});if(!Array.isArray(j.days)){const e=new Error("raw");e.detail="رد الجدول: "+JSON.stringify(j).slice(0,120);throw e}const week=j.days.reduce((a,x)=>a+x.n,0);const today=j.days[j.days.length-1].n;
     const short=d=>{try{return new Intl.DateTimeFormat("ar-KW-u-nu-latn",{weekday:"short"}).format(parse(d))}catch(e){return d.slice(5)}};
     box.replaceChildren("👁️ الزيارات: اليوم "+today+" · آخر 7 أيام "+week+" · الإجمالي "+j.views+" · أجهزة مختلفة "+j.devices,
       el("div",{class:"stat-days"},...j.days.map(x=>el("span",{text:short(x.d)+" "+x.n}))));box.hidden=false}catch(e){box.textContent="👁️ العدّاد لا يعمل بعد ("+((e&&(e.code||e.detail||e.message))||"خطأ")+"). تأكد من تحديث كود الجدول ونشر نسخة جديدة.";box.hidden=false}}
