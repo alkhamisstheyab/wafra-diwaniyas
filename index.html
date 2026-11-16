@@ -955,7 +955,7 @@ function dirRowFromForm(key){const D=DIRS[key];return D.fields.map(f=>{const g=i
   if(f.k==="phone")return toLatin(g("gf-phone")).replace(/[^\d+]/g,"");
   if(f.t==="number")return toLatin(g("gf-"+f.k));return g("gf-"+f.k)})}
 $("#gForm").addEventListener("submit",async e=>{e.preventDefault();const key=dirCur,D=DIRS[key];backTo="g";const row=dirRowFromForm(key);
-  const pi=D.fields.findIndex(f=>f.k==="phone");if(pi>=0&&row[pi]&&!dupGate(key,row[pi],dirEditing,$("#g-dup")))return;
+  const pi=D.fields.findIndex(f=>f.k==="phone");if(pi>=0&&row[pi]&&!dupGate(key,row[pi],dirEditing||(moveFrom&&moveFrom.rec),$("#g-dup")))return; /* the card being moved is not a duplicate */
   const phIdx=D.fields.findIndex(f=>f.t==="photo");
   if(admin.pin){const b=$("#g-save");b.disabled=true;try{row[phIdx]=await photoFrom($("#gfile"),row[phIdx]);
       if(dirEditing){const rec=dirEditing;await api({action:"update",sheet:key,rowNum:rec._row,expect:rec.raw[0],row,...dirMeta(key)});const rr=row.slice();rr._row=rec._row;const L=state["dir_"+key];L[L.indexOf(rec)]=rowToDir(key,rr);dirEditing=null;closeSheet();renderDir(key);toast("تم حفظ التعديل")}
