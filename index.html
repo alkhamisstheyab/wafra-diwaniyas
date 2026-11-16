@@ -169,10 +169,10 @@ html,body{overscroll-behavior-y:contain}
 .ptr.spin #ptrIcon{display:inline-block;animation:ptrspin .8s linear infinite}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.ptr.spin #ptrIcon{animation:none}}
-.prayer{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 14px;margin-bottom:12px}
+.prayer{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;margin:12px 0}
 .prayer h3{margin:0 0 8px;font-family:var(--f-display);font-weight:500;font-size:17px}
 .ptimes{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;text-align:center}
-@media (max-width:420px){.ptimes{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:420px){.ptimes{gap:4px}.ptimes div{font-size:11px;padding:5px 0}.ptimes b{font-size:14px}.prayer h3{font-size:15px}}
 .ptimes div{background:var(--sunk);border-radius:10px;padding:6px 2px;font-size:13px;color:var(--muted)}
 .ptimes b{display:block;font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums}
 .ptimes .next{background:var(--accent-soft);color:var(--accent)}
@@ -260,6 +260,7 @@ form{display:flex;flex-direction:column;gap:12px}
 
 <main>
   <div class="wrap">
+    <div class="prayer" id="prayerBox"></div>
     <div class="greet-banner" id="greetBanner" hidden></div>
     <div id="statusNote" class="note" hidden></div>
     <div class="admin-bar" id="adminBar" hidden>وضع الإدارة: الحفظ مباشر في الجدول <span class="grow"></span><button class="btn sm" type="button" id="readImg">📷 قراءة إعلان من صورة</button><button class="btn sm" type="button" id="greetBtn">📨 رسائل المناسبات</button><button class="btn sm" type="button" id="adminOut">خروج</button>
@@ -335,7 +336,6 @@ form{display:flex;flex-direction:column;gap:12px}
       <div id="out-pharmacies" class="list" style="margin-top:12px"></div>
     </section>
     <section id="view-mosques" hidden>
-      <div class="prayer" id="prayerBox"></div>
       <div class="toolbar">
         <input class="search" id="q-mosques" type="search" placeholder="ابحث باسم المسجد أو القطعة">
         <button class="btn primary" id="add-mosques">أضف مسجداً</button>
@@ -961,9 +961,9 @@ function renderPrayer(){const box=$("#prayerBox");if(!box)return;const t=todaySt
   const list=[["fajr","الفجر"],["sunrise","الشروق"],["dhuhr","الظهر"],["asr","العصر"],["maghrib","المغرب"],["isha","العشاء"]];
   const next=list.find(([k])=>k!=="sunrise"&&p[k]>now);const fmt=m=>{const h=Math.floor(m/60)%24,mm=m%60;return(h%12||12)+":"+pad(mm)};
   const left=next?p[next[0]]-now:0;const leftTxt=next?(left>=60?Math.floor(left/60)+" س "+(left%60)+" د":left+" دقيقة"):"";
-  box.replaceChildren(el("h3",{text:"🕌 مواقيت الصلاة اليوم في الوفرة"+(next?" · باقي "+leftTxt+" على "+next[1]:"")}),
+  box.replaceChildren(el("h3",{text:"🕌 مواقيت الصلاة في الوفرة"+(next?" · باقي "+leftTxt+" على "+next[1]:(()=>{const d=new Date(n.getTime()+864e5),iso=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()),l=ptOf(iso).fajr+1440-now;return " · باقي "+(l>=60?Math.floor(l/60)+" س "+(l%60)+" د":l+" دقيقة")+" على الفجر"})())}),
     el("div",{class:"ptimes"},...list.map(([k,l])=>el("div",{class:next&&next[0]===k?"next":""},el("b",{text:fmt(p[k])}),l))),
-    el("div",{class:"hijri",style:"margin-top:6px",text:"مواقيت تقريبية محسوبة لمدينة الوفرة، وقد تختلف دقيقة أو دقيقتين عن تقويم وزارة الأوقاف."}))}
+    el("div",{class:"hijri",style:"margin-top:6px;font-size:11px",text:"مواقيت تقريبية لمدينة الوفرة، قد تختلف دقيقة أو دقيقتين عن تقويم الأوقاف."}))}
 function ageText(d){const n=daysBetween(normDate(d)||todayStr(),todayStr());return n<=0?"أُضيف اليوم":n===1?"أُضيف أمس":"أُضيف قبل "+dayWord(n)}
 function renderDir(key){const D=DIRS[key],out=$("#out-"+key);if(!out)return;out.replaceChildren();const all=state["dir_"+key].filter(x=>dirVisible(key,x));
   const nEl=$("#n-"+key);if(nEl)nEl.textContent=tabOfDir(key)===key?all.length:all.length?"("+all.length+")":"";
