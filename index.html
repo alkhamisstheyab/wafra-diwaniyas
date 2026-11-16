@@ -76,8 +76,9 @@ header.top .wrap{padding-block:20px 14px;display:flex;align-items:flex-end;justi
   var(--sadu3)}
 
 nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
-nav.tabs .wrap{display:flex;gap:4px;padding-block:8px}
-.tab{flex:1;border:0;background:transparent;padding:10px 8px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+nav.tabs .wrap{display:flex;gap:4px;padding-block:8px;overflow-x:auto;scrollbar-width:none}
+nav.tabs .wrap::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;white-space:nowrap;border:0;background:transparent;padding:10px 8px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
 .tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--line),0 0 0 1px var(--line)}
 @media (max-width:460px){.tab{padding:9px 4px;font-size:14px;gap:4px}.tab .n{display:none}}
 .tab .n{font-size:12px;background:var(--sunk);border-radius:999px;padding:0 8px;font-variant-numeric:tabular-nums}
@@ -168,6 +169,7 @@ html,body{overscroll-behavior-y:contain}
 .ptr.spin #ptrIcon{display:inline-block;animation:ptrspin .8s linear infinite}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.ptr.spin #ptrIcon{animation:none}}
+.price{font-weight:700;font-size:18px;color:var(--accent);font-variant-numeric:tabular-nums}
 .apology{display:flex;flex-direction:column;gap:2px;border-radius:10px;padding:8px 12px;background:var(--azaa-soft);color:var(--ink);font-size:14px}
 .apology b{color:var(--danger);font-weight:600}
 .apology span{color:var(--muted);font-size:13px}
@@ -240,6 +242,8 @@ form{display:flex;flex-direction:column;gap:12px}
     <button class="tab" role="tab" id="tab-diwaniyas" aria-selected="false">الدواوين <span class="n" id="nDiw">0</span></button>
     <button class="tab" role="tab" id="tab-ads" aria-selected="false">الإعلانات <span class="n" id="nAds">0</span></button>
     <button class="tab" role="tab" id="tab-services" aria-selected="false">الخدمات <span class="n" id="nSv">0</span></button>
+    <button class="tab" role="tab" id="tab-restaurants" aria-selected="false">المطاعم <span class="n" id="n-restaurants">0</span></button>
+    <button class="tab" role="tab" id="tab-realestate" aria-selected="false">العقار <span class="n" id="n-realestate">0</span></button>
   </div>
 </nav>
 
@@ -294,6 +298,36 @@ form{display:flex;flex-direction:column;gap:12px}
       <div class="seg" role="group" aria-label="المهنة" id="svCrafts" style="margin-top:10px;flex-wrap:wrap;width:fit-content;max-width:100%"></div>
       <p class="hijri" style="margin:10px 0 0">أرقام أصحاب الحرف والخدمات كمرجع لأهالي الوفرة. الاتفاق على العمل والسعر بين الطرفين مباشرة.</p>
       <div id="svOut" class="list" style="margin-top:12px"></div>
+    </section>
+    <section id="view-restaurants" hidden>
+      <div class="toolbar">
+        <input class="search" id="q-restaurants" type="search" placeholder="ابحث باسم المطعم أو نوعه">
+        <button class="btn primary" id="add-restaurants">أضف مطعمك</button>
+      </div>
+      <div class="seg" role="group" aria-label="النوع" id="chips-restaurants" style="margin-top:10px;flex-wrap:wrap;width:fit-content;max-width:100%"></div>
+      <div id="out-restaurants" class="list" style="margin-top:12px"></div>
+    </section>
+    <section id="view-realestate" hidden>
+      <div class="seg" role="group" aria-label="العقار" id="reSeg" style="width:fit-content">
+        <button type="button" data-re="rentals" aria-pressed="true">للإيجار <span id="n-rentals"></span></button>
+        <button type="button" data-re="offices" aria-pressed="false">مكاتب عقارية <span id="n-offices"></span></button>
+      </div>
+      <div id="re-rentals">
+        <div class="toolbar" style="margin-top:12px">
+          <input class="search" id="q-rentals" type="search" placeholder="ابحث بالنوع أو القطعة">
+          <button class="btn primary" id="add-rentals">أعلن عن عقار</button>
+        </div>
+        <div class="seg" role="group" aria-label="النوع" id="chips-rentals" style="margin-top:10px;flex-wrap:wrap;width:fit-content;max-width:100%"></div>
+        <div id="out-rentals" class="list" style="margin-top:12px"></div>
+      </div>
+      <div id="re-offices" hidden>
+        <div class="toolbar" style="margin-top:12px">
+          <input class="search" id="q-offices" type="search" placeholder="ابحث باسم المكتب">
+          <button class="btn primary" id="add-offices">أضف مكتبك</button>
+        </div>
+        <div id="chips-offices" hidden></div>
+        <div id="out-offices" class="list" style="margin-top:12px"></div>
+      </div>
     </section>
     <footer class="credit">
       <img src="icon-192.png" alt="" width="32" height="32">
@@ -367,6 +401,17 @@ form{display:flex;flex-direction:column;gap:12px}
         <span class="grow"></span><button class="btn ghost danger" type="button" id="e-del" hidden>حذف</button>
       </div>
       <div class="confirm" id="e-delConfirm" hidden>حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="e-delYes">نعم، احذف</button><button class="btn sm" type="button" id="e-delNo">تراجع</button></div>
+    </form>
+
+    <form id="gForm" hidden>
+      <div id="gFields" style="display:flex;flex-direction:column;gap:12px"></div>
+      <p class="hijri" id="g-dup" hidden style="color:var(--danger);margin:0"></p>
+      <div class="formactions">
+        <button class="btn primary" type="submit" id="g-save">متابعة للإرسال</button>
+        <button class="btn" type="button" data-close>إلغاء</button>
+        <span class="grow"></span><button class="btn ghost danger" type="button" id="g-del" hidden>حذف</button>
+      </div>
+      <div class="confirm" id="g-delConfirm" hidden>حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="g-delYes">نعم، احذف</button><button class="btn sm" type="button" id="g-delNo">تراجع</button></div>
     </form>
 
     <form id="svForm" hidden>
@@ -725,7 +770,7 @@ function renderDiw(){const out=$("#diwOut");out.replaceChildren();$("#nDiw").tex
 
 /* ---------- forms ---------- */
 const overlay=$("#overlay");
-function openSheet(title,form){$("#sheetTitle").textContent=title;const P={e:"#eventForm",d:"#diwForm",f:"#adForm",v:"#svForm",o:"#greetPanel",s:"#sendPanel",a:"#apologyForm",p:"#pinForm",i:"#pastePanel",r:"#reviewPanel"};
+function openSheet(title,form){$("#sheetTitle").textContent=title;const P={e:"#eventForm",d:"#diwForm",f:"#adForm",v:"#svForm",g:"#gForm",o:"#greetPanel",s:"#sendPanel",a:"#apologyForm",p:"#pinForm",i:"#pastePanel",r:"#reviewPanel"};
   for(const k in P)$(P[k]).hidden=k!==form;overlay.hidden=false;const f={e:"#e-person",d:"#d-name",f:"#a-title",v:"#s-name",p:"#pin-in",i:"#paste-in"}[form];if(f)setTimeout(()=>$(f).focus(),50)}
 function closeSheet(){overlay.hidden=true}
 overlay.addEventListener("click",e=>{if(e.target===overlay||e.target.hasAttribute("data-close"))closeSheet()});
@@ -790,7 +835,7 @@ async function api(body){const r=await fetch(CONFIG.adminApi,{method:"POST",head
   const t=await r.text();let j;try{j=JSON.parse(t)}catch(x){const m=t.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();const err=new Error("server");err.detail=(m.match(/(Exception|Error|خطأ)[^.]{0,140}/)||[m.slice(0,140)])[0];throw err}
   if(!j.ok){const err=new Error(j.error||"fail");err.code=j.error;if(j.detail)err.detail=j.detail;throw err}return j}
 function applyAdmin(){const on=!!admin.pin;if(on)loadStats();else $("#adminStats").hidden=true;document.querySelectorAll(".admin-only").forEach(x=>x.hidden=!on);$("#adminBar").hidden=!on;$("#adminIn").hidden=on;
-  $("#addEvent").textContent=on?"+ إضافة مناسبة":"أرسل مناسبة";$("#addDiw").textContent=on?"+ إضافة ديوان":"أرسل ديوانك";$("#addAd").textContent=on?"+ إضافة إعلان":"أرسل إعلان";$("#addSv").textContent=on?"+ إضافة خدمة":"أضف خدمتك";$("#s-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";$("#a-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";
+  $("#addEvent").textContent=on?"+ إضافة مناسبة":"أرسل مناسبة";$("#addDiw").textContent=on?"+ إضافة ديوان":"أرسل ديوانك";$("#addAd").textContent=on?"+ إضافة إعلان":"أرسل إعلان";$("#addSv").textContent=on?"+ إضافة خدمة":"أضف خدمتك";Object.entries(DIRS).forEach(([k,D])=>{$("#add-"+k).textContent=on?"+ إضافة "+D.one:D.add});$("#s-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";$("#a-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";
   $("#e-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";$("#d-save").textContent=on?"حفظ مباشرة":"متابعة للإرسال";
   const ap=$("#apologyForm button[type=submit]");if(ap)ap.textContent=on?"حفظ مباشرة":"متابعة للإرسال";renderDiw()}
 async function loadStats(){const box=$("#adminStats");if(!admin.pin){box.hidden=true;return}
@@ -813,7 +858,102 @@ const mapRow=(sheet,r)=>sheet==="events"?rowToEvent(r):sheet==="ads"?rowToAd(r):
 const SHEET_META={ads:{title:"الإعلانات",headers:["العنوان","الجهة","من تاريخ","إلى تاريخ","المكان","الوقت","التفاصيل","رابط","الهاتف","رابط الموقع","صورة","فيديو"],keyCol:1},
   services:{title:"الخدمات",headers:["الاسم","المهنة","الهاتف","يخدم مناطق","ملاحظات","رابط الموقع","صورة"],keyCol:1}};
 const meta=sheet=>SHEET_META[sheet]||{};
-const renderAll=()=>{renderEvents();renderDiw();renderAds();renderSv()};
+const renderAll=()=>{renderEvents();renderDiw();renderAds();renderSv();Object.keys(DIRS).forEach(renderDir)};
+
+/* ---------- directory sections (restaurants, rentals, real-estate offices) ----------
+   One engine: each section lists its columns in sheet order; the sheet is created on first save. */
+const DIRS={
+ restaurants:{title:"المطاعم",one:"مطعم",add:"أضف مطعمك",req:"طلب إضافة مطعم",prefix:"rs",emoji:"🍽️",filterK:"type",
+  fields:[{k:"name",l:"اسم المطعم",req:1},{k:"type",l:"النوع",t:"select",opts:["مأكولات شعبية","مشويات","مأكولات بحرية","هندي وباكستاني","عربي ولبناني","وجبات سريعة","بيتزا ومعجنات","مخبز وحلويات","كافيه وقهوة","عصائر","أخرى"]},
+   {k:"phone",l:"الهاتف",t:"tel"},{k:"delivery",l:"التوصيل",ph:"مثال: طلبات، كيتا، توصيل من المطعم"},{k:"hours",l:"ساعات العمل",ph:"مثال: يومياً من 12 ظهراً إلى 12 ليلاً"},
+   {k:"address",l:"العنوان",ph:"قطعة، شارع، مجمع"},{k:"map",l:"رابط الموقع",t:"url"},{k:"link",l:"حساب إنستغرام أو رابط",t:"url"},{k:"notes",l:"ملاحظات",t:"area"},{k:"photo",l:"صورة أو شعار",t:"photo"}],
+  heading:x=>x.name,show:[["hours","ساعات العمل"],["delivery","التوصيل"],["address","العنوان"]],logo:true},
+ rentals:{title:"عقارات للإيجار",one:"عقار",add:"أعلن عن عقار",req:"طلب إعلان عقار للإيجار",prefix:"rn",emoji:"🏠",filterK:"type",
+  fields:[{k:"type",l:"نوع العقار",t:"select",req:1,opts:["بيت كامل","دور","شقة","ملحق","محل","أخرى"]},{k:"block",l:"القطعة",t:"number"},{k:"rent",l:"الإيجار الشهري (د.ك)",t:"number"},
+   {k:"rooms",l:"عدد الغرف",t:"number"},{k:"baths",l:"عدد الحمامات",t:"number"},{k:"details",l:"التفاصيل",t:"area",ph:"مثال: مدخل خاص، مكيف مركزي، قريب من المسجد"},
+   {k:"phone",l:"هاتف المعلن",t:"tel",req:1},{k:"owner",l:"اسم المعلن",ph:"المالك أو المكتب"},{k:"map",l:"رابط الموقع",t:"url"},{k:"photo",l:"صورة العقار",t:"photo"},
+   {k:"posted",l:"تاريخ الإضافة",t:"auto"},{k:"status",l:"الحالة",t:"status",opts:["متاح","تم التأجير"]}],
+  heading:x=>(x.type||"عقار")+" للإيجار"+(x.block?" – قطعة "+x.block:""),show:[["rooms","الغرف"],["baths","الحمامات"],["owner","المعلن"]],newest:true},
+ offices:{title:"المكاتب العقارية",one:"مكتب",add:"أضف مكتبك",req:"طلب إضافة مكتب عقاري",prefix:"ro",emoji:"🏢",
+  fields:[{k:"name",l:"اسم المكتب",req:1},{k:"contact",l:"المسؤول"},{k:"phone",l:"الهاتف",t:"tel",req:1},{k:"services",l:"الخدمات",t:"multi",opts:["تأجير","بيع وشراء","إدارة أملاك","تقييم عقاري"]},
+   {k:"address",l:"العنوان"},{k:"map",l:"رابط الموقع",t:"url"},{k:"link",l:"حساب إنستغرام أو رابط",t:"url"},{k:"notes",l:"ملاحظات",t:"area"},{k:"photo",l:"صورة أو شعار",t:"photo"}],
+  heading:x=>x.name,show:[["contact","المسؤول"],["services","الخدمات"],["address","العنوان"]],logo:true}};
+Object.entries(DIRS).forEach(([key,D])=>{D.key=key;state["dir_"+key]=[];state["dirF_"+key]="all"});
+const dirMeta=key=>({title:DIRS[key].title,headers:DIRS[key].fields.map(f=>f.l),keyCol:1});
+const dirKey=(key,x)=>evKey(DIRS[key].prefix+(x.phone||""),DIRS[key].heading(x));
+function rowToDir(key,r){const D=DIRS[key],x={_row:r._row,raw:D.fields.map((_,i)=>r[i]||"")};D.fields.forEach((f,i)=>{x[f.k]=String(r[i]||"").trim()});
+  x.phone=toLatin(x.phone).replace(/[^\d+]/g,"");x.list=D.fields.find(f=>f.t==="multi")?splitCrafts(x[D.fields.find(f=>f.t==="multi").k]):[];return x}
+const dirVisible=(key,x)=>!(key==="rentals"&&/أجير|مؤجر/.test(x.status||"")&&!admin.pin);
+function dirText(key,x){const D=DIRS[key],L=[D.emoji+" "+D.heading(x)];
+  if(key==="rentals"){if(x.rent)L.push("الإيجار: "+x.rent+" د.ك شهرياً");const rb=[x.rooms?x.rooms+" غرف":"",x.baths?x.baths+" حمامات":""].filter(Boolean).join(" · ");if(rb)L.push(rb);if(x.details)L.push(x.details)}
+  D.show.forEach(([k,l])=>{if(x[k]&&!(key==="rentals"&&(k==="rooms"||k==="baths")))L.push(l+": "+x[k])});if(x.notes)L.push(x.notes);
+  if(x.phone)L.push("📞 "+x.phone);if(safeUrl(x.link))L.push(x.link);if(safeUrl(x.map))L.push("الموقع: "+x.map);
+  L.push("","📲 دليل الوفرة:",SITE+"/#"+D.prefix+"-"+dirKey(key,x));return L.join("\n")}
+function dirCard(key,x){const D=DIRS[key];const facts=el("dl",{class:"facts"});
+  D.show.forEach(([k,l])=>{if(x[k])facts.append(el("dt",{text:l}),el("dd",{text:x[k]}))});
+  const rented=key==="rentals"&&/أجير|مؤجر/.test(x.status||"");
+  const head=el("div",{class:"dhead"},D.logo&&x.photo?logoEl({logo:x.photo,name:D.heading(x)}):null,el("div",{style:"min-width:0"},el("h3",{text:D.heading(x)}),
+    el("div",{class:"row",style:"margin-top:4px"},D.filterK&&x[D.filterK]&&key!=="rentals"?el("span",{class:"chip now",text:x[D.filterK]}):null,rented?el("span",{class:"chip soft",text:"تم التأجير"}):null,
+      key==="rentals"&&x.posted?el("span",{class:"chip soft",text:ageText(x.posted)}):null)));
+  return el("article",{class:"dcard",id:D.prefix+"-"+dirKey(key,x)},!D.logo?photoEl(x.photo,D.heading(x)):null,head,
+    key==="rentals"&&x.rent?el("div",{class:"price",text:x.rent+" د.ك شهرياً"}):null,
+    key==="rentals"&&x.details?el("div",{class:"ad-details",text:x.details}):null,facts,x.notes?el("div",{class:"ad-details",text:x.notes}):null,
+    x.phone?el("div",{class:"mono",style:"font-size:17px;font-weight:600",text:x.phone}):null,
+    el("div",{class:"actions"},x.phone?el("a",{class:"btn sm primary",href:"tel:"+x.phone},"اتصال"):null,
+      x.phone?el("a",{class:"btn sm",href:"https://wa.me/"+waNum(x.phone),target:"_blank",rel:"noopener"},"واتساب"):null,
+      safeUrl(x.map)?el("a",{class:"btn sm",href:x.map,target:"_blank",rel:"noopener"},"الموقع"):null,
+      safeUrl(x.link)?el("a",{class:"btn sm",href:x.link,target:"_blank",rel:"noopener"},"الحساب"):null,
+      el("button",{class:"btn sm",type:"button",onclick:()=>shareText(dirText(key,x),x.photo,D.one+".jpg")},"مشاركة"),
+      admin.pin&&x._row?el("button",{class:"btn sm ghost",type:"button",onclick:()=>openDirForm(key,x)},"تعديل"):null))}
+function ageText(d){const n=daysBetween(normDate(d)||todayStr(),todayStr());return n<=0?"أُضيف اليوم":n===1?"أُضيف أمس":"أُضيف قبل "+dayWord(n)}
+function renderDir(key){const D=DIRS[key],out=$("#out-"+key);if(!out)return;out.replaceChildren();const all=state["dir_"+key].filter(x=>dirVisible(key,x));
+  const nEl=$("#n-"+key);if(nEl)nEl.textContent=key==="restaurants"?all.length:all.length?"("+all.length+")":"";
+  if(key!=="restaurants"){const t=state.dir_rentals.filter(x=>dirVisible("rentals",x)).length+state.dir_offices.length;$("#n-realestate").textContent=t}
+  const chips=$("#chips-"+key);if(D.filterK&&chips){const present=D.fields.find(f=>f.k===D.filterK).opts.filter(o=>all.some(x=>x[D.filterK]===o)).concat([...new Set(all.map(x=>x[D.filterK]))].filter(o=>o&&!D.fields.find(f=>f.k===D.filterK).opts.includes(o)));
+    if(state["dirF_"+key]!=="all"&&!present.includes(state["dirF_"+key]))state["dirF_"+key]="all";
+    chips.replaceChildren(...["all",...present].map(c=>{const b=el("button",{type:"button","aria-pressed":String(state["dirF_"+key]===c)},c==="all"?"الكل":c);b.addEventListener("click",()=>{state["dirF_"+key]=c;renderDir(key)});return b}));chips.hidden=!present.length}
+  if(!state.loaded.v){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ التحميل…"})));return}
+  const q=normAr($("#q-"+key).value.trim());const F=state["dirF_"+key];
+  let list=all.filter(x=>(F==="all"||x[D.filterK]===F)&&(!q||normAr(D.fields.map(f=>x[f.k]).join(" ")).includes(q)));
+  list=D.newest?list.sort((a,b)=>(normDate(b.posted)||"").localeCompare(normDate(a.posted)||"")):list.sort((a,b)=>D.heading(a).localeCompare(D.heading(b),"ar"));
+  if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:all.length?"لا نتائج مطابقة":"لا يوجد شيء مسجّل بعد"}),all.length?"جرّب كلمة أخرى أو اختر «الكل».":"اضغط «"+D.add+"» لإضافة أول "+D.one+"."));return}
+  out.append(...list.map(x=>dirCard(key,x)))}
+/* form */
+let dirEditing=null,dirCur=null;
+function openDirForm(key,rec,prefill){const D=DIRS[key];dirCur=key;dirEditing=rec||null;dupAck=null;const box=$("#gFields");box.replaceChildren();$("#g-dup").hidden=true;$("#g-delConfirm").hidden=true;
+  const src=rec||prefill||{};
+  D.fields.forEach((f,i)=>{const id="gf-"+f.k,val=src[f.k]||"";
+    if(f.t==="auto")return;if(f.t==="status"&&!rec)return;
+    if(f.t==="photo"){if(!admin.pin)return;box.append(el("div",{class:"field"},el("label",{for:"gfile"},f.l+" (اختياري)"),el("input",{id:"gfile",type:"file",accept:"image/*"}),Object.assign(el("input",{id,type:"url",dir:"ltr",placeholder:"أو الصق رابط صورة https://..."}),{value:val})));return}
+    if(f.t==="multi"){const sel=splitCrafts(val);box.append(el("div",{class:"field"},el("span",{class:"lbl"},f.l),el("div",{class:"daypick",id},...f.opts.map((o,j)=>el("label",{},Object.assign(el("input",{type:"checkbox",id:id+"-"+j,value:o}),{checked:sel.includes(o)}),o)))));return}
+    let inp;
+    if(f.t==="select"||f.t==="status"){inp=el("select",{id},el("option",{value:"",text:"— اختر —"}),...f.opts.map(o=>el("option",{value:o,text:o})));if(val&&!f.opts.includes(val))inp.append(el("option",{value:val,text:val}));inp.value=val||(f.t==="status"?f.opts[0]:"")}
+    else if(f.t==="area"){inp=el("textarea",{id,placeholder:f.ph||""});inp.value=val}
+    else{inp=el("input",{id,type:f.t==="tel"?"tel":f.t==="url"?"url":"text",inputmode:f.t==="number"?"numeric":f.t==="tel"?"tel":"text",dir:f.t==="tel"||f.t==="url"?"ltr":"auto",placeholder:f.ph||(f.t==="url"?"https://...":"")});inp.value=val}
+    if(f.req)inp.required=true;box.append(el("div",{class:"field"},el("label",{for:id},f.l),inp))});
+  $("#g-del").hidden=!(rec&&admin.pin);$("#g-save").textContent=admin.pin?"حفظ مباشرة":"متابعة للإرسال";
+  openSheet(rec?"تعديل "+D.one:admin.pin?D.one+" جديد":D.add,"g")}
+function dirRowFromForm(key){const D=DIRS[key];return D.fields.map(f=>{const g=id=>{const e=document.getElementById(id);return e?e.value.trim():""};
+  if(f.t==="multi")return[...document.querySelectorAll("#gf-"+f.k+" input:checked")].map(x=>x.value).join("، ");
+  if(f.t==="auto")return dirEditing?(dirEditing[f.k]||todayStr()):todayStr();
+  if(f.t==="status")return dirEditing?(g("gf-"+f.k)||"متاح"):"متاح";
+  if(f.k==="phone")return toLatin(g("gf-phone")).replace(/[^\d+]/g,"");
+  if(f.t==="number")return toLatin(g("gf-"+f.k));return g("gf-"+f.k)})}
+$("#gForm").addEventListener("submit",async e=>{e.preventDefault();const key=dirCur,D=DIRS[key];backTo="g";const row=dirRowFromForm(key);
+  const pi=D.fields.findIndex(f=>f.k==="phone");if(pi>=0&&row[pi]&&!dupGate(key,row[pi],dirEditing,$("#g-dup")))return;
+  const phIdx=D.fields.findIndex(f=>f.t==="photo");
+  if(admin.pin){const b=$("#g-save");b.disabled=true;try{row[phIdx]=await photoFrom($("#gfile"),row[phIdx]);
+      if(dirEditing){const rec=dirEditing;await api({action:"update",sheet:key,rowNum:rec._row,expect:rec.raw[0],row,...dirMeta(key)});const rr=row.slice();rr._row=rec._row;const L=state["dir_"+key];L[L.indexOf(rec)]=rowToDir(key,rr);dirEditing=null;closeSheet();renderDir(key);toast("تم حفظ التعديل")}
+      else{const res=await api({action:"append",sheet:key,row,...dirMeta(key)});const rr=row.slice();rr._row=res.row;state["dir_"+key].push(rowToDir(key,rr));closeSheet();renderDir(key);toast("تم الحفظ")}}
+    catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}return}
+  showSend(["طلب "+D.req.replace(/^طلب\s*/,"")+" – دواوين الوفرة",""].concat(D.fields.filter(f=>f.t!=="photo"&&f.t!=="auto"&&f.t!=="status").map(f=>f.l+": "+(row[D.fields.indexOf(f)]||""))).concat(["","يمكنك إرسال الصور بعد هذه الرسالة."]))});
+$("#g-del").addEventListener("click",()=>{$("#g-delConfirm").hidden=false});
+$("#g-delNo").addEventListener("click",()=>{$("#g-delConfirm").hidden=true});
+$("#g-delYes").addEventListener("click",async()=>{const rec=dirEditing,key=dirCur;if(!rec)return;const b=$("#g-delYes");b.disabled=true;
+  try{await api({action:"delete",sheet:key,rowNum:rec._row,expect:rec.raw[0],...dirMeta(key)});const L=state["dir_"+key];L.splice(L.indexOf(rec),1);L.forEach(x=>{if(x._row>rec._row)x._row--});dirEditing=null;closeSheet();renderDir(key);toast("تم الحذف")}
+  catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
+Object.keys(DIRS).forEach(key=>{$("#add-"+key).addEventListener("click",()=>openDirForm(key,null));$("#q-"+key).addEventListener("input",()=>renderDir(key))});
+document.querySelectorAll("#reSeg button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("#reSeg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));$("#re-rentals").hidden=b.dataset.re!=="rentals";$("#re-offices").hidden=b.dataset.re!=="offices"}));
 async function saveRow(sheet,row){const res=await api({action:"append",sheet,row,...meta(sheet)});const rr=row.slice();rr._row=res.row;
   listOf(sheet).push(mapRow(sheet,rr));closeSheet();renderAll();toast("تم الحفظ، يظهر للجميع خلال دقائق")}
 
@@ -923,9 +1063,9 @@ function rowToSv(r){const crafts=splitCrafts(r[1]);return{name:r[0]||"",crafts,c
 const allCrafts=()=>CRAFTS.concat([...new Set(state.sv.flatMap(v=>v.crafts))].filter(c=>!CRAFTS.includes(c)));
 /* one phone number = one entry; same number in another section needs a second press */
 const phoneKey=p=>{let d=toLatin(p).replace(/\D/g,"");if(d.startsWith("00"))d=d.slice(2);if(d.length>8&&d.startsWith("965"))d=d.slice(3);return d};
-const SECT={services:"الخدمات",ads:"الإعلانات",diwaniyas:"الدواوين"};
+const SECT={services:"الخدمات",ads:"الإعلانات",diwaniyas:"الدواوين",restaurants:"المطاعم",rentals:"العقارات للإيجار",offices:"المكاتب العقارية"};
 function phoneOwner(phone,exceptRec){const k=phoneKey(phone);if(k.length<7)return null;
-  const pools=[["services",state.sv,x=>x.phone,x=>x.name],["ads",state.ads,x=>x.phone,x=>x.title],["diwaniyas",state.diw,x=>x.phone,x=>x.name]];
+  const pools=[["services",state.sv,x=>x.phone,x=>x.name],["ads",state.ads,x=>x.phone,x=>x.title],["diwaniyas",state.diw,x=>x.phone,x=>x.name]].concat(["restaurants","offices"].map(k=>[k,state["dir_"+k]||[],x=>x.phone,x=>DIRS[k].heading(x)]));
   for(const [sec,list,ph,nm] of pools)for(const x of list)if(x!==exceptRec&&phoneKey(ph(x))===k)return{sec,name:nm(x),rec:x};return null}
 let dupAck=null;
 function dupGate(section,phone,exceptRec,msgEl){const o=phoneOwner(phone,exceptRec);if(!o){msgEl.hidden=true;return true}
@@ -1091,6 +1231,8 @@ $("#pasteGo").addEventListener("click",()=>{const t=$("#paste-in").value;const k
   else if(/طلب إضافة ديوان/.test(t)&&kv["اسم الديوان"]){kind="diwaniyas";cols=DIW_COLS}
   else if(/طلب إضافة إعلان/.test(t)&&kv["العنوان"]){kind="ads";cols=AD_COLS}
   else if(/طلب إضافة خدمة/.test(t)&&kv["الاسم"]&&kv["الهاتف"]){kind="services";cols=SV_COLS}
+  if(!kind){for(const [key,D] of Object.entries(DIRS)){if(t.includes(D.req)){const pre={};D.fields.forEach(f=>{if(kv[f.l]!=null)pre[f.k]=kv[f.l]});location.hash=key==="restaurants"?"restaurants":"realestate";
+      if(key!=="restaurants")document.querySelector('#reSeg [data-re="'+key+'"]').click();openDirForm(key,null,pre);return}}}
   if(!kind){$("#pasteErr").hidden=false;return}
   if(kind==="services"){openSvForm(null,{name:kv["الاسم"],crafts:splitCrafts(kv["المهنة"]),phone:kv["الهاتف"],areas:kv["يخدم مناطق"],notes:kv["ملاحظات"],mapUrl:kv["رابط الموقع"]});return}
   const box=$("#reviewFields");box.replaceChildren();const add=(label,val,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:label}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف/.test(label)?"ltr":"auto"}),{value:val||""}))};
@@ -1136,10 +1278,10 @@ $("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFie
   catch(err){if(err.code==="notfound")toast("لم أجد ديواناً بهذا الاسم في الجدول");else if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
 
 /* ---------- tabs ---------- */
-function showTab(t){state.tab=t;["events","diwaniyas","ads","services"].forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",String(t===k));$("#view-"+k).hidden=t!==k})}
-$("#tab-events").addEventListener("click",()=>{location.hash="events"});$("#tab-ads").addEventListener("click",()=>{location.hash="ads"});$("#tab-services").addEventListener("click",()=>{location.hash="services"});$("#tab-diwaniyas").addEventListener("click",()=>{location.hash="diwaniyas"});
-const fromHash=()=>{const h=location.hash;showTab(/^#(diwaniyas|dw-)/.test(h)?"diwaniyas":/^#(ads|ad-)/.test(h)?"ads":/^#(services|sv-)/.test(h)?"services":"events");focusEv()};
-function focusEv(){const h=location.hash;if(!/^#(ev|dw|ad|sv)-/.test(h))return;const c=document.getElementById(h.slice(1));if(c){c.scrollIntoView({block:"center"});c.classList.add("focus")}}window.addEventListener("hashchange",fromHash);fromHash();
+function showTab(t){state.tab=t;["events","diwaniyas","ads","services","restaurants","realestate"].forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",String(t===k));$("#view-"+k).hidden=t!==k})}
+$("#tab-events").addEventListener("click",()=>{location.hash="events"});$("#tab-restaurants").addEventListener("click",()=>{location.hash="restaurants"});$("#tab-realestate").addEventListener("click",()=>{location.hash="realestate"});$("#tab-ads").addEventListener("click",()=>{location.hash="ads"});$("#tab-services").addEventListener("click",()=>{location.hash="services"});$("#tab-diwaniyas").addEventListener("click",()=>{location.hash="diwaniyas"});
+const fromHash=()=>{const h=location.hash;showTab(/^#(diwaniyas|dw-)/.test(h)?"diwaniyas":/^#(ads|ad-)/.test(h)?"ads":/^#(services|sv-)/.test(h)?"services":/^#(restaurants|rs-)/.test(h)?"restaurants":/^#(realestate|rn-|ro-)/.test(h)?"realestate":"events");if(/^#ro-/.test(h))document.querySelector('#reSeg [data-re="offices"]').click();focusEv()};
+function focusEv(){const h=location.hash;if(!/^#(ev|dw|ad|sv|rs|rn|ro)-/.test(h))return;const c=document.getElementById(h.slice(1));if(c){c.scrollIntoView({block:"center"});c.classList.add("focus")}}window.addEventListener("hashchange",fromHash);fromHash();
 document.querySelectorAll("#view-events .seg button").forEach(b=>b.addEventListener("click",()=>{state.filter=b.dataset.f;document.querySelectorAll("#view-events .seg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));renderEvents()}));
 $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("change",renderDiw);
 
@@ -1161,7 +1303,7 @@ async function loadLive(){if(!apiReady())throw new Error("no api");const ctl=new
   try{let q="?t="+Date.now();if(!admin.pin){q+="&hit=1";try{if(!localStorage.getItem("wafra-seen")){q+="&nv=1";localStorage.setItem("wafra-seen","1")}}catch(x){}}
     const r=await fetch(CONFIG.adminApi+q,{signal:ctl.signal});const txt=await r.text();let j;try{j=JSON.parse(txt)}catch(x){const m=txt.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();throw new Error((m.match(/(SyntaxError|ReferenceError|TypeError|Exception|Error)[^.]{0,160}/)||[m.slice(0,160)])[0])}if(!j.ok)throw new Error("bad");
     const rows=list=>list.map(x=>{const r=x.v.map(v=>String(v==null?"":v).trim());r._row=x.row;return r}).filter(r=>r.some(Boolean));
-    return{diw:rows(j.diwaniyas||[]),ev:rows(j.events||[]),ads:rows(j.ads||[]),sv:rows(j.services||[])}}finally{clearTimeout(t)}}
+    return{diw:rows(j.diwaniyas||[]),ev:rows(j.events||[]),ads:rows(j.ads||[]),sv:rows(j.services||[]),dirs:Object.fromEntries(Object.keys(DIRS).map(k=>[k,rows(j[k]||[])]))}}finally{clearTimeout(t)}}
 function useRows(diwRows,evRows){state.diw=diwRows.map(rowToDiw).filter(d=>d.name);
   const bad=[];state.events=evRows.map(r=>{const e=rowToEvent(r);if(!(e.person&&e.startDate))bad.push(e);return e}).filter(e=>e.person&&e.startDate);
   state.badRows=bad}
@@ -1173,7 +1315,7 @@ function adminChecks(){if(!admin.pin||!state.badRows||!state.badRows.length)retu
       return el("button",{class:"btn sm",type:"button",onclick:()=>{if(!e.startDate)e.startDate="";openEventForm(e)}},"الصف "+e._row+" · "+(e.person||e.raw[0]||"بدون اسم")+" · "+what)})));n.hidden=false}
 /* the sheet can be slow to wake up: give it a second try before using the backup copy */
 const slowNote=setTimeout(()=>{if(!state.loaded.e)toast("جارٍ تحميل البيانات…")},4000);
-loadLive().catch(()=>loadLive()).then(d=>{clearTimeout(slowNote);state.src="live";useRows(d.diw,d.ev);useAds(d.ads);useSv(d.sv)})
+loadLive().catch(()=>loadLive()).then(d=>{clearTimeout(slowNote);state.src="live";useRows(d.diw,d.ev);useAds(d.ads);useSv(d.sv);Object.keys(DIRS).forEach(k=>{state["dir_"+k]=(d.dirs[k]||[]).map(r=>rowToDir(k,r)).filter(x=>x[DIRS[k].fields[0].k])})})
   .catch(e=>{state.liveErr=(e&&e.message)||"";return Promise.all([loadCsv(CONFIG.diwaniyasCsv),loadCsv(CONFIG.eventsCsv)]).then(([dr,er])=>{state.src="csv";useRows(dr,er);
     /* backup copy has only diwaniyas and occasions: say so instead of showing empty sections */
     setNote(admin.pin?"تعذّر الاتصال بكود الجدول، فالإعلانات والخدمات لا تظهر الآن (البيانات محفوظة في الجدول). السبب: "+(state.liveErr||"غير معروف")+". افتح Apps Script وتأكد أن الكود سليم ثم انشر نسخة جديدة.":"الإعلانات والخدمات غير متاحة مؤقتاً، حاول بعد قليل.")})})
