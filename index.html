@@ -608,7 +608,7 @@ try{fmtMonth=new Intl.DateTimeFormat("ar-KW-u-nu-latn",{month:"long"});}catch(e)
 try{fmtHijri=new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn",{day:"numeric",month:"long",year:"numeric"});}catch(e){fmtHijri=null}
 const hijri=s=>fmtHijri?fmtHijri.format(parse(s)):"";
 /* prayer times for Al-Wafra, Kuwait (Fajr 18°, Isha 17.5°, standard Asr); minutes after local midnight */
-function prayerTimes(iso){const [Y,M,D]=iso.split("-").map(Number);const lat=28.64,lng=47.93,tz=3;
+function prayerTimes(iso){const [Y,M,D]=iso.split("-").map(Number);const lat=28.605,lng=48.02,tz=3;
   const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI,fix=(a,b)=>{a=a-b*Math.floor(a/b);return a<0?a+b:a};
   const sin=x=>Math.sin(rad(x)),cos=x=>Math.cos(rad(x)),tan=x=>Math.tan(rad(x)),asin=x=>deg(Math.asin(x)),acos=x=>deg(Math.acos(Math.max(-1,Math.min(1,x)))),atan2=(y,x)=>deg(Math.atan2(y,x)),acot=x=>deg(Math.atan(1/x));
   let y=Y,m=M;if(m<=2){y-=1;m+=12}const A=Math.floor(y/100),B=2-A+Math.floor(A/4);const jd=Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+D+B-1524.5-lng/(15*24);
@@ -972,11 +972,19 @@ function renderDir(key){const D=DIRS[key],out=$("#out-"+key);if(!out)return;out.
     if(state["dirF_"+key]!=="all"&&!present.includes(state["dirF_"+key]))state["dirF_"+key]="all";
     chips.replaceChildren(...["all",...present].map(c=>{const b=el("button",{type:"button","aria-pressed":String(state["dirF_"+key]===c)},c==="all"?"الكل":c);b.addEventListener("click",()=>{state["dirF_"+key]=c;renderDir(key)});return b}));chips.hidden=!present.length}
   if(!state.loaded.v){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ التحميل…"})));return}
+  if(key==="mosques"&&admin.pin){const have=new Set(all.map(x=>normAr(x.name||"")));const left=MOSQUE_SEED.filter(o=>!have.has(normAr(o.name))).length;
+    if(left){const b=el("button",{type:"button",class:"btn primary"},"🕌 إضافة "+left+" مسجداً من خرائط Google دفعة واحدة");b.addEventListener("click",()=>importMosques(b));
+      out.append(el("div",{class:"note",style:"margin-bottom:10px"},"قائمة مساجد الوفرة السكنية جاهزة (الاسم والموقع). اضغط للإضافة، ثم عدّل أي مسجد لإكمال القطعة والإمام. ",b))}}
   const q=normAr($("#q-"+key).value.trim());const F=state["dirF_"+key];
   let list=all.filter(x=>(F==="all"||x[D.filterK]===F)&&(!q||normAr(D.fields.map(f=>x[f.k]).join(" ")).includes(q)));
   list=D.newest?list.sort((a,b)=>(normDate(b.posted)||"").localeCompare(normDate(a.posted)||"")):list.sort((a,b)=>D.heading(a).localeCompare(D.heading(b),"ar"));
   if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:all.length?"لا نتائج مطابقة":"لا يوجد شيء مسجّل بعد"}),all.length?"جرّب كلمة أخرى أو اختر «الكل».":"اضغط «"+D.add+"» لإضافة أول "+D.one+"."));return}
   out.append(...list.map(x=>dirCard(key,x)))}
+const MOSQUE_SEED=[{"name": "مسجد أبي هريرة", "map": "https://www.google.com/maps/search/?api=1&query=28.608549,48.0146977&query_place_id=ChIJP92l7Btezj8RUB40Vybsf-E", "services": "مواقف واسعة"}, {"name": "مسجد أبو دجانة الأنصاري", "block": "6", "map": "https://www.google.com/maps/search/?api=1&query=28.6002441,48.0279833&query_place_id=ChIJPyGgufxhzj8RAIZQ9zMN0l0", "notes": "تصميم دائري مميز، ومبنى خارجي للوضوء ودورات المياه."}, {"name": "مسجد أحمد سعود الخالد", "map": "https://www.google.com/maps/search/?api=1&query=28.6111162,48.0092786&query_place_id=ChIJ9QK8kQ9ezj8R2IfJ0qNWjJM"}, {"name": "مسجد نورة هادي العجمي", "map": "https://www.google.com/maps/search/?api=1&query=28.6135259,48.0143032&query_place_id=ChIJ2ejy7BBezj8RhglF6wbOfmM", "phone": "94479627"}, {"name": "مسجد التوحيد", "map": "https://www.google.com/maps/search/?api=1&query=28.5954409,48.0084292&query_place_id=ChIJFU3pDgBhzj8Ra6qdFcqRxkk"}, {"name": "مسجد توسعة الوفرة الجديدة (الإمام صالح بن كيسان المدني)", "block": "7", "map": "https://www.google.com/maps/search/?api=1&query=28.5961709,48.0149709&query_place_id=ChIJwW0ZVUthzj8R_AHi1DRA-xc"}, {"name": "مسجد قطعة 7 (قرب فرع الجمعية)", "block": "7", "map": "https://www.google.com/maps/search/?api=1&query=28.5939077,48.0202&query_place_id=ChIJUbVTb71gzj8RCudxFEY_NS0", "phone": "50726222", "notes": "تذكر التقييمات أنه للمرحوم راجس عبيد الدوسري."}, {"name": "مسجد قطعة 5", "block": "5", "map": "https://www.google.com/maps/search/?api=1&query=28.6164433,48.0285556&query_place_id=ChIJpZkfPgBfzj8RcXWxAKA1ju0"}, {"name": "مسجد قطعة 4", "block": "4", "map": "https://www.google.com/maps/search/?api=1&query=28.6030516,48.0096012&query_place_id=ChIJC2Ez5wJezj8RtmY4REznuZM"}, {"name": "مسجد قطعة 4 (شارع 401)", "block": "4", "address": "شارع 401", "map": "https://www.google.com/maps/search/?api=1&query=28.6018902,48.0120131&query_place_id=ChIJ97DfBABfzj8RLwC4tI5Mibo"}, {"name": "مسجد صناعية الوفرة السكنية", "address": "المنطقة الصناعية", "map": "https://www.google.com/maps/search/?api=1&query=28.6031565,48.0392267&query_place_id=ChIJAY5fK8Rhzj8RwMWPE1WWYXQ"}];
+async function importMosques(btn){const have=new Set(state.dir_mosques.map(x=>normAr(x.name||"")));const todo=MOSQUE_SEED.filter(o=>!have.has(normAr(o.name)));
+  btn.disabled=true;let n=0;for(const o of todo){btn.textContent="جارٍ الإضافة… "+(n+1)+" من "+todo.length;const row=DIRS.mosques.fields.map(f=>o[f.k]||"");
+    try{const j=await api({action:"append",sheet:"mosques",row,...dirMeta("mosques")});const rr=row.slice();rr._row=j.row;state.dir_mosques.push(rowToDir("mosques",rr));n++}catch(e){toast("توقفت الإضافة: "+(e.detail||e.message));break}}
+  renderDir("mosques");if(n)toast("أُضيف "+n+" مسجداً، راجعها وأكمل الناقص")}
 /* form */
 let dirEditing=null,dirCur=null;
 let moveFrom=null;
