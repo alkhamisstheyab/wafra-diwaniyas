@@ -243,6 +243,7 @@ form{display:flex;flex-direction:column;gap:12px}
     <button class="tab" role="tab" id="tab-ads" aria-selected="false">الإعلانات <span class="n" id="nAds">0</span></button>
     <button class="tab" role="tab" id="tab-services" aria-selected="false">الخدمات <span class="n" id="nSv">0</span></button>
     <button class="tab" role="tab" id="tab-restaurants" aria-selected="false">المطاعم <span class="n" id="n-restaurants">0</span></button>
+    <button class="tab" role="tab" id="tab-cafes" aria-selected="false">الكافيهات <span class="n" id="n-cafes">0</span></button>
     <button class="tab" role="tab" id="tab-realestate" aria-selected="false">العقار <span class="n" id="n-realestate">0</span></button>
   </div>
 </nav>
@@ -306,6 +307,14 @@ form{display:flex;flex-direction:column;gap:12px}
       </div>
       <div class="seg" role="group" aria-label="النوع" id="chips-restaurants" style="margin-top:10px;flex-wrap:wrap;width:fit-content;max-width:100%"></div>
       <div id="out-restaurants" class="list" style="margin-top:12px"></div>
+    </section>
+    <section id="view-cafes" hidden>
+      <div class="toolbar">
+        <input class="search" id="q-cafes" type="search" placeholder="ابحث باسم الكافيه أو نوعه">
+        <button class="btn primary" id="add-cafes">أضف كافيهك</button>
+      </div>
+      <div class="seg" role="group" aria-label="النوع" id="chips-cafes" style="margin-top:10px;flex-wrap:wrap;width:fit-content;max-width:100%"></div>
+      <div id="out-cafes" class="list" style="margin-top:12px"></div>
     </section>
     <section id="view-realestate" hidden>
       <div class="seg" role="group" aria-label="العقار" id="reSeg" style="width:fit-content">
@@ -852,20 +861,25 @@ $("#adminOut").addEventListener("click",()=>{try{localStorage.removeItem("wafra-
 $("#pinForm").addEventListener("submit",async e=>{e.preventDefault();const pin=$("#pin-in").value.trim();if(!pin)return;const btn=$("#pinGo");btn.disabled=true;
   try{admin.pin=pin;await api({action:"check"});try{localStorage.setItem("wafra-admin-pin",pin)}catch(x){}applyAdmin();closeSheet();toast("مرحباً، وضع الإدارة مفعّل")}
   catch(err){admin.pin=null;$("#pinErr").textContent=err.code==="pin"?"الرمز غير صحيح.":"تعذّر الاتصال، حاول مرة أخرى.";$("#pinErr").hidden=false}finally{btn.disabled=false}});
-const listOf=sheet=>sheet==="events"?state.events:sheet==="ads"?state.ads:sheet==="services"?state.sv:state.diw;
+const listOf=sheet=>sheet==="events"?state.events:sheet==="ads"?state.ads:sheet==="services"?state.sv:state["dir_"+sheet]||state.diw;
 const mapRow=(sheet,r)=>sheet==="events"?rowToEvent(r):sheet==="ads"?rowToAd(r):sheet==="services"?rowToSv(r):rowToDiw(r);
 /* sheets the script may create on first use; the script stays generic */
 const SHEET_META={ads:{title:"الإعلانات",headers:["العنوان","الجهة","من تاريخ","إلى تاريخ","المكان","الوقت","التفاصيل","رابط","الهاتف","رابط الموقع","صورة","فيديو"],keyCol:1},
   services:{title:"الخدمات",headers:["الاسم","المهنة","الهاتف","يخدم مناطق","ملاحظات","رابط الموقع","صورة"],keyCol:1}};
-const meta=sheet=>SHEET_META[sheet]||{};
+const meta=sheet=>SHEET_META[sheet]||(DIRS[sheet]?dirMeta(sheet):{});
 const renderAll=()=>{renderEvents();renderDiw();renderAds();renderSv();Object.keys(DIRS).forEach(renderDir)};
 
 /* ---------- directory sections (restaurants, rentals, real-estate offices) ----------
    One engine: each section lists its columns in sheet order; the sheet is created on first save. */
 const DIRS={
  restaurants:{title:"المطاعم",one:"مطعم",add:"أضف مطعمك",req:"طلب إضافة مطعم",prefix:"rs",emoji:"🍽️",filterK:"type",
-  fields:[{k:"name",l:"اسم المطعم",req:1},{k:"type",l:"النوع",t:"select",opts:["مأكولات شعبية","مشويات","مأكولات بحرية","هندي وباكستاني","عربي ولبناني","وجبات سريعة","بيتزا ومعجنات","مخبز وحلويات","كافيه وقهوة","عصائر","أخرى"]},
+  fields:[{k:"name",l:"اسم المطعم",req:1},{k:"type",l:"النوع",t:"select",opts:["مأكولات شعبية","مشويات","مأكولات بحرية","هندي وباكستاني","عربي ولبناني","وجبات سريعة","بيتزا ومعجنات","مخبز وحلويات","أخرى"]},
    {k:"phone",l:"الهاتف",t:"tel"},{k:"delivery",l:"التوصيل",ph:"مثال: طلبات، كيتا، توصيل من المطعم"},{k:"hours",l:"ساعات العمل",ph:"مثال: يومياً من 12 ظهراً إلى 12 ليلاً"},
+   {k:"address",l:"العنوان",ph:"قطعة، شارع، مجمع"},{k:"map",l:"رابط الموقع",t:"url"},{k:"link",l:"حساب إنستغرام أو رابط",t:"url"},{k:"notes",l:"ملاحظات",t:"area"},{k:"photo",l:"صورة أو شعار",t:"photo"}],
+  heading:x=>x.name,show:[["hours","ساعات العمل"],["delivery","التوصيل"],["address","العنوان"]],logo:true},
+ cafes:{title:"الكافيهات والعصائر",one:"كافيه",add:"أضف كافيهك",req:"طلب إضافة كافيه",prefix:"cf",emoji:"☕",filterK:"type",
+  fields:[{k:"name",l:"اسم الكافيه",req:1},{k:"type",l:"النوع",t:"select",opts:["قهوة مختصة","كافيه","كرك وشاي","عصائر وكوكتيل","آيس كريم وحلويات","أخرى"]},
+   {k:"phone",l:"الهاتف",t:"tel"},{k:"delivery",l:"التوصيل",ph:"مثال: طلبات، كيتا، توصيل من الكافيه"},{k:"hours",l:"ساعات العمل",ph:"مثال: يومياً من 7 صباحاً إلى 1 ليلاً"},
    {k:"address",l:"العنوان",ph:"قطعة، شارع، مجمع"},{k:"map",l:"رابط الموقع",t:"url"},{k:"link",l:"حساب إنستغرام أو رابط",t:"url"},{k:"notes",l:"ملاحظات",t:"area"},{k:"photo",l:"صورة أو شعار",t:"photo"}],
   heading:x=>x.name,show:[["hours","ساعات العمل"],["delivery","التوصيل"],["address","العنوان"]],logo:true},
  rentals:{title:"عقارات للإيجار",one:"عقار",add:"أعلن عن عقار",req:"طلب إعلان عقار للإيجار",prefix:"rn",emoji:"🏠",filterK:"type",
@@ -904,11 +918,12 @@ function dirCard(key,x){const D=DIRS[key];const facts=el("dl",{class:"facts"});
       safeUrl(x.map)?el("a",{class:"btn sm",href:x.map,target:"_blank",rel:"noopener"},"الموقع"):null,
       safeUrl(x.link)?el("a",{class:"btn sm",href:x.link,target:"_blank",rel:"noopener"},"الحساب"):null,
       el("button",{class:"btn sm",type:"button",onclick:()=>shareText(dirText(key,x),x.photo,D.one+".jpg")},"مشاركة"),
-      admin.pin&&x._row?el("button",{class:"btn sm ghost",type:"button",onclick:()=>openDirForm(key,x)},"تعديل"):null))}
+      admin.pin&&x._row?el("button",{class:"btn sm ghost",type:"button",onclick:()=>openDirForm(key,x)},"تعديل"):null,
+      admin.pin&&x._row?el("button",{class:"btn sm ghost",type:"button",onclick:e=>pickMove(e.currentTarget,key,x)},"نقل إلى قسم آخر"):null))}
 function ageText(d){const n=daysBetween(normDate(d)||todayStr(),todayStr());return n<=0?"أُضيف اليوم":n===1?"أُضيف أمس":"أُضيف قبل "+dayWord(n)}
 function renderDir(key){const D=DIRS[key],out=$("#out-"+key);if(!out)return;out.replaceChildren();const all=state["dir_"+key].filter(x=>dirVisible(key,x));
-  const nEl=$("#n-"+key);if(nEl)nEl.textContent=key==="restaurants"?all.length:all.length?"("+all.length+")":"";
-  if(key!=="restaurants"){const t=state.dir_rentals.filter(x=>dirVisible("rentals",x)).length+state.dir_offices.length;$("#n-realestate").textContent=t}
+  const nEl=$("#n-"+key);if(nEl)nEl.textContent=key==="restaurants"||key==="cafes"?all.length:all.length?"("+all.length+")":"";
+  if(key==="rentals"||key==="offices"){const t=state.dir_rentals.filter(x=>dirVisible("rentals",x)).length+state.dir_offices.length;$("#n-realestate").textContent=t}
   const chips=$("#chips-"+key);if(D.filterK&&chips){const present=D.fields.find(f=>f.k===D.filterK).opts.filter(o=>all.some(x=>x[D.filterK]===o)).concat([...new Set(all.map(x=>x[D.filterK]))].filter(o=>o&&!D.fields.find(f=>f.k===D.filterK).opts.includes(o)));
     if(state["dirF_"+key]!=="all"&&!present.includes(state["dirF_"+key]))state["dirF_"+key]="all";
     chips.replaceChildren(...["all",...present].map(c=>{const b=el("button",{type:"button","aria-pressed":String(state["dirF_"+key]===c)},c==="all"?"الكل":c);b.addEventListener("click",()=>{state["dirF_"+key]=c;renderDir(key)});return b}));chips.hidden=!present.length}
@@ -922,18 +937,22 @@ function renderDir(key){const D=DIRS[key],out=$("#out-"+key);if(!out)return;out.
 let dirEditing=null,dirCur=null;
 let moveFrom=null;
 /* move an ad or a service card into one of the directory sections */
-function moveMap(sheet,x,to){if(sheet==="ads"){const base={name:x.title,phone:x.phone,map:x.mapUrl,link:x.link,photo:x.photo};
-    if(to==="restaurants")return Object.assign(base,{hours:x.time,address:x.place,notes:x.details});
+function moveMap(sheet,x,to){
+  if(DIRS[sheet]){const o={};DIRS[to].fields.forEach(f=>{if(x[f.k]!=null&&f.k!=="type"&&f.t!=="auto"&&f.t!=="status")o[f.k]=x[f.k]});
+    if(to==="rentals"&&!o.details)o.details=[x.name,x.notes].filter(Boolean).join("\n");if(to==="rentals"&&!o.owner)o.owner=x.name||x.contact;return o}
+  const shop=t=>t==="restaurants"||t==="cafes";
+  if(sheet==="ads"){const base={name:x.title,phone:x.phone,map:x.mapUrl,link:x.link,photo:x.photo};
+    if(shop(to))return Object.assign(base,{hours:x.time,address:x.place,notes:x.details});
     if(to==="offices")return Object.assign(base,{contact:x.org,address:x.place,notes:x.details});
     return{details:[x.title,x.details].filter(Boolean).join("\n"),phone:x.phone,owner:x.org,map:x.mapUrl,photo:x.photo}}
   const base={name:x.name,phone:x.phone,map:x.mapUrl,photo:x.photo};
-  if(to==="restaurants")return Object.assign(base,{address:x.areas,notes:x.notes});
-  if(to==="offices")return Object.assign(base,{address:x.areas,notes:x.notes});
+  if(shop(to)||to==="offices")return Object.assign(base,{address:x.areas,notes:x.notes});
   return{details:x.notes,phone:x.phone,owner:x.name,map:x.mapUrl,photo:x.photo}}
+const tabOfDir=k=>k==="rentals"||k==="offices"?"realestate":k;
 function pickMove(btn,sheet,x){const box=btn.closest(".actions");const old=box.parentNode.querySelector(".msgpick");if(old){old.remove();return}
-  const go=to=>{p.remove();location.hash=to==="restaurants"?"restaurants":"realestate";if(to!=="restaurants")document.querySelector('#reSeg [data-re="'+to+'"]').click();
+  const go=to=>{p.remove();location.hash=tabOfDir(to);if(tabOfDir(to)==="realestate")document.querySelector('#reSeg [data-re="'+to+'"]').click();
     openDirForm(to,null,moveMap(sheet,x,to),{sheet,rec:x});toast("راجع البيانات ثم احفظ، ويُحذف من مكانه السابق تلقائياً")};
-  const p=el("div",{class:"confirm msgpick"},"نقل إلى:",...["restaurants","offices","rentals"].map(k=>el("button",{class:"btn sm",type:"button",onclick:()=>go(k)},DIRS[k].title)),
+  const p=el("div",{class:"confirm msgpick"},"نقل إلى:",...["restaurants","cafes","offices","rentals"].filter(k=>k!==sheet).map(k=>el("button",{class:"btn sm",type:"button",onclick:()=>go(k)},DIRS[k].title)),
     el("button",{class:"btn sm ghost",type:"button",onclick:()=>p.remove()},"إلغاء"));box.after(p)}
 function openDirForm(key,rec,prefill,from){const D=DIRS[key];dirCur=key;dirEditing=rec||null;moveFrom=from||null;dupAck=null;const box=$("#gFields");box.replaceChildren();$("#g-dup").hidden=true;$("#g-delConfirm").hidden=true;
   const src=rec||prefill||{};
@@ -1082,9 +1101,9 @@ function rowToSv(r){const crafts=splitCrafts(r[1]);return{name:r[0]||"",crafts,c
 const allCrafts=()=>CRAFTS.concat([...new Set(state.sv.flatMap(v=>v.crafts))].filter(c=>!CRAFTS.includes(c)));
 /* one phone number = one entry; same number in another section needs a second press */
 const phoneKey=p=>{let d=toLatin(p).replace(/\D/g,"");if(d.startsWith("00"))d=d.slice(2);if(d.length>8&&d.startsWith("965"))d=d.slice(3);return d};
-const SECT={services:"الخدمات",ads:"الإعلانات",diwaniyas:"الدواوين",restaurants:"المطاعم",rentals:"العقارات للإيجار",offices:"المكاتب العقارية"};
+const SECT={services:"الخدمات",ads:"الإعلانات",diwaniyas:"الدواوين",restaurants:"المطاعم",cafes:"الكافيهات والعصائر",rentals:"العقارات للإيجار",offices:"المكاتب العقارية"};
 function phoneOwner(phone,exceptRec){const k=phoneKey(phone);if(k.length<7)return null;
-  const pools=[["services",state.sv,x=>x.phone,x=>x.name],["ads",state.ads,x=>x.phone,x=>x.title],["diwaniyas",state.diw,x=>x.phone,x=>x.name]].concat(["restaurants","offices"].map(k=>[k,state["dir_"+k]||[],x=>x.phone,x=>DIRS[k].heading(x)]));
+  const pools=[["services",state.sv,x=>x.phone,x=>x.name],["ads",state.ads,x=>x.phone,x=>x.title],["diwaniyas",state.diw,x=>x.phone,x=>x.name]].concat(["restaurants","cafes","offices"].map(k=>[k,state["dir_"+k]||[],x=>x.phone,x=>DIRS[k].heading(x)]));
   for(const [sec,list,ph,nm] of pools)for(const x of list)if(x!==exceptRec&&phoneKey(ph(x))===k)return{sec,name:nm(x),rec:x};return null}
 let dupAck=null;
 function dupGate(section,phone,exceptRec,msgEl){const o=phoneOwner(phone,exceptRec);if(!o){msgEl.hidden=true;return true}
@@ -1251,8 +1270,8 @@ $("#pasteGo").addEventListener("click",()=>{const t=$("#paste-in").value;const k
   else if(/طلب إضافة ديوان/.test(t)&&kv["اسم الديوان"]){kind="diwaniyas";cols=DIW_COLS}
   else if(/طلب إضافة إعلان/.test(t)&&kv["العنوان"]){kind="ads";cols=AD_COLS}
   else if(/طلب إضافة خدمة/.test(t)&&kv["الاسم"]&&kv["الهاتف"]){kind="services";cols=SV_COLS}
-  if(!kind){for(const [key,D] of Object.entries(DIRS)){if(t.includes(D.req)){const pre={};D.fields.forEach(f=>{if(kv[f.l]!=null)pre[f.k]=kv[f.l]});location.hash=key==="restaurants"?"restaurants":"realestate";
-      if(key!=="restaurants")document.querySelector('#reSeg [data-re="'+key+'"]').click();openDirForm(key,null,pre);return}}}
+  if(!kind){for(const [key,D] of Object.entries(DIRS)){if(t.includes(D.req)){const pre={};D.fields.forEach(f=>{if(kv[f.l]!=null)pre[f.k]=kv[f.l]});location.hash=tabOfDir(key);
+      if(tabOfDir(key)==="realestate")document.querySelector('#reSeg [data-re="'+key+'"]').click();openDirForm(key,null,pre);return}}}
   if(!kind){$("#pasteErr").hidden=false;return}
   if(kind==="services"){openSvForm(null,{name:kv["الاسم"],crafts:splitCrafts(kv["المهنة"]),phone:kv["الهاتف"],areas:kv["يخدم مناطق"],notes:kv["ملاحظات"],mapUrl:kv["رابط الموقع"]});return}
   const box=$("#reviewFields");box.replaceChildren();const add=(label,val,i)=>{const id="rv-"+i;box.append(el("label",{for:id,text:label}),Object.assign(el("input",{id,dir:/رابط|تاريخ|الهاتف/.test(label)?"ltr":"auto"}),{value:val||""}))};
@@ -1298,10 +1317,10 @@ $("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFie
   catch(err){if(err.code==="notfound")toast("لم أجد ديواناً بهذا الاسم في الجدول");else if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
 
 /* ---------- tabs ---------- */
-function showTab(t){state.tab=t;["events","diwaniyas","ads","services","restaurants","realestate"].forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",String(t===k));$("#view-"+k).hidden=t!==k})}
-$("#tab-events").addEventListener("click",()=>{location.hash="events"});$("#tab-restaurants").addEventListener("click",()=>{location.hash="restaurants"});$("#tab-realestate").addEventListener("click",()=>{location.hash="realestate"});$("#tab-ads").addEventListener("click",()=>{location.hash="ads"});$("#tab-services").addEventListener("click",()=>{location.hash="services"});$("#tab-diwaniyas").addEventListener("click",()=>{location.hash="diwaniyas"});
-const fromHash=()=>{const h=location.hash;showTab(/^#(diwaniyas|dw-)/.test(h)?"diwaniyas":/^#(ads|ad-)/.test(h)?"ads":/^#(services|sv-)/.test(h)?"services":/^#(restaurants|rs-)/.test(h)?"restaurants":/^#(realestate|rn-|ro-)/.test(h)?"realestate":"events");if(/^#ro-/.test(h))document.querySelector('#reSeg [data-re="offices"]').click();focusEv()};
-function focusEv(){const h=location.hash;if(!/^#(ev|dw|ad|sv|rs|rn|ro)-/.test(h))return;const c=document.getElementById(h.slice(1));if(c){c.scrollIntoView({block:"center"});c.classList.add("focus")}}window.addEventListener("hashchange",fromHash);fromHash();
+function showTab(t){state.tab=t;["events","diwaniyas","ads","services","restaurants","cafes","realestate"].forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",String(t===k));$("#view-"+k).hidden=t!==k})}
+$("#tab-events").addEventListener("click",()=>{location.hash="events"});$("#tab-restaurants").addEventListener("click",()=>{location.hash="restaurants"});$("#tab-cafes").addEventListener("click",()=>{location.hash="cafes"});$("#tab-realestate").addEventListener("click",()=>{location.hash="realestate"});$("#tab-ads").addEventListener("click",()=>{location.hash="ads"});$("#tab-services").addEventListener("click",()=>{location.hash="services"});$("#tab-diwaniyas").addEventListener("click",()=>{location.hash="diwaniyas"});
+const fromHash=()=>{const h=location.hash;showTab(/^#(diwaniyas|dw-)/.test(h)?"diwaniyas":/^#(ads|ad-)/.test(h)?"ads":/^#(services|sv-)/.test(h)?"services":/^#(restaurants|rs-)/.test(h)?"restaurants":/^#(cafes|cf-)/.test(h)?"cafes":/^#(realestate|rn-|ro-)/.test(h)?"realestate":"events");if(/^#ro-/.test(h))document.querySelector('#reSeg [data-re="offices"]').click();focusEv()};
+function focusEv(){const h=location.hash;if(!/^#(ev|dw|ad|sv|rs|cf|rn|ro)-/.test(h))return;const c=document.getElementById(h.slice(1));if(c){c.scrollIntoView({block:"center"});c.classList.add("focus")}}window.addEventListener("hashchange",fromHash);fromHash();
 document.querySelectorAll("#view-events .seg button").forEach(b=>b.addEventListener("click",()=>{state.filter=b.dataset.f;document.querySelectorAll("#view-events .seg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));renderEvents()}));
 $("#q").addEventListener("input",renderDiw);$("#openToday").addEventListener("change",renderDiw);
 
