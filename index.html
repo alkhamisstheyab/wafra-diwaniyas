@@ -76,11 +76,12 @@ header.top .wrap{padding-block:20px 14px;display:flex;align-items:flex-end;justi
   var(--sadu3)}
 
 nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
-nav.tabs .wrap{display:flex;gap:4px;padding-block:8px;overflow-x:auto;scrollbar-width:none}
+nav.tabs .wrap{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding-block:6px}
 nav.tabs .wrap::-webkit-scrollbar{display:none}
 .tab{flex:1 0 auto;white-space:nowrap;border:0;background:transparent;padding:10px 8px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
 .tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--line),0 0 0 1px var(--line)}
-@media (max-width:460px){.tab{padding:9px 4px;font-size:14px;gap:4px}.tab .n{display:none}}
+@media (max-width:460px){.tab{padding:8px 2px;font-size:13px;gap:4px}.tab .n{display:none}}
+@media (max-width:340px){.tab{font-size:12px}}
 .tab .n{font-size:12px;background:var(--sunk);border-radius:999px;padding:0 8px;font-variant-numeric:tabular-nums}
 
 main .wrap{padding-block:16px 96px;display:flex;flex-direction:column;gap:16px}
