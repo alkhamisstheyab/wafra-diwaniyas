@@ -920,7 +920,22 @@ function renderDir(key){const D=DIRS[key],out=$("#out-"+key);if(!out)return;out.
   out.append(...list.map(x=>dirCard(key,x)))}
 /* form */
 let dirEditing=null,dirCur=null;
-function openDirForm(key,rec,prefill){const D=DIRS[key];dirCur=key;dirEditing=rec||null;dupAck=null;const box=$("#gFields");box.replaceChildren();$("#g-dup").hidden=true;$("#g-delConfirm").hidden=true;
+let moveFrom=null;
+/* move an ad or a service card into one of the directory sections */
+function moveMap(sheet,x,to){if(sheet==="ads"){const base={name:x.title,phone:x.phone,map:x.mapUrl,link:x.link,photo:x.photo};
+    if(to==="restaurants")return Object.assign(base,{hours:x.time,address:x.place,notes:x.details});
+    if(to==="offices")return Object.assign(base,{contact:x.org,address:x.place,notes:x.details});
+    return{details:[x.title,x.details].filter(Boolean).join("\n"),phone:x.phone,owner:x.org,map:x.mapUrl,photo:x.photo}}
+  const base={name:x.name,phone:x.phone,map:x.mapUrl,photo:x.photo};
+  if(to==="restaurants")return Object.assign(base,{address:x.areas,notes:x.notes});
+  if(to==="offices")return Object.assign(base,{address:x.areas,notes:x.notes});
+  return{details:x.notes,phone:x.phone,owner:x.name,map:x.mapUrl,photo:x.photo}}
+function pickMove(btn,sheet,x){const box=btn.closest(".actions");const old=box.parentNode.querySelector(".msgpick");if(old){old.remove();return}
+  const go=to=>{p.remove();location.hash=to==="restaurants"?"restaurants":"realestate";if(to!=="restaurants")document.querySelector('#reSeg [data-re="'+to+'"]').click();
+    openDirForm(to,null,moveMap(sheet,x,to),{sheet,rec:x});toast("راجع البيانات ثم احفظ، ويُحذف من مكانه السابق تلقائياً")};
+  const p=el("div",{class:"confirm msgpick"},"نقل إلى:",...["restaurants","offices","rentals"].map(k=>el("button",{class:"btn sm",type:"button",onclick:()=>go(k)},DIRS[k].title)),
+    el("button",{class:"btn sm ghost",type:"button",onclick:()=>p.remove()},"إلغاء"));box.after(p)}
+function openDirForm(key,rec,prefill,from){const D=DIRS[key];dirCur=key;dirEditing=rec||null;moveFrom=from||null;dupAck=null;const box=$("#gFields");box.replaceChildren();$("#g-dup").hidden=true;$("#g-delConfirm").hidden=true;
   const src=rec||prefill||{};
   D.fields.forEach((f,i)=>{const id="gf-"+f.k,val=src[f.k]||"";
     if(f.t==="auto")return;if(f.t==="status"&&!rec)return;
@@ -944,7 +959,10 @@ $("#gForm").addEventListener("submit",async e=>{e.preventDefault();const key=dir
   const phIdx=D.fields.findIndex(f=>f.t==="photo");
   if(admin.pin){const b=$("#g-save");b.disabled=true;try{row[phIdx]=await photoFrom($("#gfile"),row[phIdx]);
       if(dirEditing){const rec=dirEditing;await api({action:"update",sheet:key,rowNum:rec._row,expect:rec.raw[0],row,...dirMeta(key)});const rr=row.slice();rr._row=rec._row;const L=state["dir_"+key];L[L.indexOf(rec)]=rowToDir(key,rr);dirEditing=null;closeSheet();renderDir(key);toast("تم حفظ التعديل")}
-      else{const res=await api({action:"append",sheet:key,row,...dirMeta(key)});const rr=row.slice();rr._row=res.row;state["dir_"+key].push(rowToDir(key,rr));closeSheet();renderDir(key);toast("تم الحفظ")}}
+      else{const res=await api({action:"append",sheet:key,row,...dirMeta(key)});const rr=row.slice();rr._row=res.row;state["dir_"+key].push(rowToDir(key,rr));closeSheet();
+        if(moveFrom){const m=moveFrom;moveFrom=null;try{await api({action:"delete",sheet:m.sheet,rowNum:m.rec._row,expect:m.rec.raw[0],...meta(m.sheet)});const L=listOf(m.sheet);L.splice(L.indexOf(m.rec),1);L.forEach(x=>{if(x._row>m.rec._row)x._row--});renderAll();toast("تم النقل إلى "+D.title)}
+          catch(err){renderAll();setNote("حُفظ في قسم "+D.title+"، لكن تعذّر حذفه من مكانه السابق. احذفه من هناك بزر «تعديل» ثم «حذف».")}}
+        else{renderDir(key);toast("تم الحفظ")}}}
     catch(err){if(!changedErr(err))adminFail(err)}finally{b.disabled=false}return}
   showSend(["طلب "+D.req.replace(/^طلب\s*/,"")+" – دواوين الوفرة",""].concat(D.fields.filter(f=>f.t!=="photo"&&f.t!=="auto"&&f.t!=="status").map(f=>f.l+": "+(row[D.fields.indexOf(f)]||""))).concat(["","يمكنك إرسال الصور بعد هذه الرسالة."]))});
 $("#g-del").addEventListener("click",()=>{$("#g-delConfirm").hidden=false});
@@ -996,7 +1014,8 @@ function adCard(a){const st=status(a);const facts=el("dl",{class:"facts"});const
     el("div",{class:"actions"},el("button",{class:"btn sm",type:"button",onclick:()=>shareText(adText(a),a.photo,"إعلان.jpg")},"مشاركة واتساب"),
       safeUrl(a.link)?el("a",{class:"btn sm",href:a.link,target:"_blank",rel:"noopener"},"الرابط"):null,
       safeUrl(a.mapUrl)?el("a",{class:"btn sm",href:a.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
-      admin.pin&&a._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("ads",a)},"تعديل"):null))}
+      admin.pin&&a._row?el("button",{class:"btn sm ghost",onclick:()=>openEdit("ads",a)},"تعديل"):null,
+      admin.pin&&a._row?el("button",{class:"btn sm ghost",type:"button",onclick:e=>pickMove(e.currentTarget,"ads",a)},"نقل إلى قسم آخر"):null))}
 function renderAds(){const out=$("#adOut");out.replaceChildren();const list=state.ads.filter(a=>a.perm||status(a)!=="past").sort((x,y)=>x.startDate.localeCompare(y.startDate));
   $("#nAds").textContent=list.length;
   if(!state.loaded.a){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل الإعلانات…"})));return}
@@ -1086,7 +1105,8 @@ function svCard(v){return el("article",{class:"dcard",id:"sv-"+svKey(v)},
       el("button",{class:"btn sm",type:"button",onclick:e=>copy(v.phone,e.currentTarget)},"نسخ الرقم"),
       el("button",{class:"btn sm",type:"button",onclick:()=>shareText(svText(v),"","")},"مشاركة"),
       safeUrl(v.mapUrl)?el("a",{class:"btn sm",href:v.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
-      admin.pin&&v._row?el("button",{class:"btn sm ghost",onclick:()=>openSvForm(v)},"تعديل"):null))}
+      admin.pin&&v._row?el("button",{class:"btn sm ghost",onclick:()=>openSvForm(v)},"تعديل"):null,
+      admin.pin&&v._row?el("button",{class:"btn sm ghost",type:"button",onclick:e=>pickMove(e.currentTarget,"services",v)},"نقل إلى قسم آخر"):null))}
 function renderSv(){const out=$("#svOut");out.replaceChildren();$("#nSv").textContent=state.sv.length;
   const present=allCrafts().filter(c=>state.sv.some(v=>v.crafts.includes(c)));
   if(state.svFilter!=="all"&&!present.includes(state.svFilter))state.svFilter="all";
