@@ -172,6 +172,7 @@ html,body{overscroll-behavior-y:contain}
 @media (prefers-reduced-motion:reduce){.ptr.spin #ptrIcon{animation:none}}
 .prayer{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;margin:12px 0}
 .prayer h3{margin:0 0 8px;font-family:var(--f-display);font-weight:500;font-size:17px}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}.prow .btn{flex:none}
 .ptimes{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;text-align:center}
 @media (max-width:420px){.ptimes{gap:4px}.ptimes div{font-size:11px;padding:5px 0}.ptimes b{font-size:14px}.prayer h3{font-size:15px}}
 .ptimes div{background:var(--sunk);border-radius:10px;padding:6px 2px;font-size:13px;color:var(--muted)}
@@ -978,7 +979,37 @@ function renderPrayer(){const box=$("#prayerBox");if(!box)return;const t=todaySt
   const left=next?p[next[0]]-now:0;const leftTxt=next?(left>=60?Math.floor(left/60)+" س "+(left%60)+" د":left+" دقيقة"):"";
   box.replaceChildren(el("h3",{text:"🕌 مواقيت الصلاة في الوفرة"+(next?" · باقي "+leftTxt+" على "+next[1]:(()=>{const d=new Date(n.getTime()+864e5),iso=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()),l=ptOf(iso).fajr+1440-now;return " · باقي "+(l>=60?Math.floor(l/60)+" س "+(l%60)+" د":l+" دقيقة")+" على الفجر"})())}),
     el("div",{class:"ptimes"},...list.map(([k,l])=>el("div",{class:next&&next[0]===k?"next":""},el("b",{text:fmt(p[k])}),l))),
-    el("div",{class:"hijri",style:"margin-top:6px;font-size:11px",text:"مواقيت تقريبية لمدينة الوفرة، قد تختلف دقيقة أو دقيقتين عن تقويم الأوقاف."}))}
+    el("div",{class:"prow"},el("div",{class:"hijri",style:"font-size:11px",text:"مواقيت تقريبية لمدينة الوفرة، قد تختلف دقيقة أو دقيقتين عن تقويم الأوقاف."}),
+      el("button",{type:"button",class:"btn sm",onclick:e=>sharePrayer(e.currentTarget)},next?"📤 مشاركة مواقيت اليوم":"📤 مشاركة مواقيت الغد")))}
+const PR_LIST=[["fajr","الفجر","🌅"],["sunrise","الشروق","☀️"],["dhuhr","الظهر","🕛"],["asr","العصر","🌤️"],["maghrib","المغرب","🌇"],["isha","العشاء","🌙"]];
+const prFmt=m=>{const h=Math.floor(m/60)%24,mm=m%60;return(h%12||12)+":"+pad(mm)};const prAmPm=m=>Math.floor(m/60)%24<12?"ص":"م";
+function prayerDay(){const n=new Date(),now=n.getHours()*60+n.getMinutes(),t=todayStr();return ptOf(t).isha>now?t:addDays(t,1)}
+function prayerText(day){const p=ptOf(day),d=parse(day);
+  return "🕌 *مواقيت الصلاة في مدينة الوفرة السكنية*\n\n📅 "+DAYS[d.getDay()]+" "+fmtLong.format(d).replace(/^[^،]*،\s*/,"")+" "+d.getFullYear()+"م\n🗓️ "+hijri(day)+"\n\n━━━━━━━━━━\n"+
+    PR_LIST.map(([k,l,e])=>e+" *"+l+"* : "+prFmt(p[k])+" "+prAmPm(p[k])).join("\n")+"\n━━━━━━━━━━\n\n﴿حَافِظُوا عَلَى الصَّلَوَاتِ وَالصَّلَاةِ الْوُسْطَىٰ﴾"+SIGN}
+async function prayerImage(day){const p=ptOf(day),d=parse(day),W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  try{await Promise.all(['700 80px "Reem Kufi"','600 40px "IBM Plex Sans Arabic"'].map(f=>document.fonts.load(f)))}catch(e){}
+  const K='"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif',B='"IBM Plex Sans Arabic",Tahoma,sans-serif';
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#1E5A4C");g.addColorStop(1,"#0F3a31");x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle="rgba(255,255,255,.05)";for(let i=0;i<W;i+=60){x.beginPath();x.moveTo(i,0);x.lineTo(i+30,30);x.lineTo(i+60,0);x.fill();x.beginPath();x.moveTo(i,H);x.lineTo(i+30,H-30);x.lineTo(i+60,H);x.fill()}
+  try{const im=new Image();im.src="icon-192.png";await im.decode();x.save();x.beginPath();x.arc(W/2,150,70,0,7);x.fillStyle="#fff";x.fill();x.clip();x.drawImage(im,W/2-60,90,120,120);x.restore()}catch(e){}
+  x.direction="rtl";x.textAlign="center";x.fillStyle="#fff";x.font="700 76px "+K;x.fillText("مواقيت الصلاة",W/2,300);
+  x.font="500 38px "+B;x.fillStyle="#CFE5DD";x.fillText("مدينة الوفرة السكنية",W/2,360);
+  x.font="600 36px "+B;x.fillStyle="#F3D9A4";x.fillText(DAYS[d.getDay()]+" · "+fmtLong.format(d).replace(/^[^،]*،\s*/,"")+" "+d.getFullYear(),W/2,430);
+  x.fillStyle="#CFE5DD";x.font="500 32px "+B;x.fillText(hijri(day),W/2,478);
+  const top=525,rh=100,gap=14;PR_LIST.forEach(([k,l],i)=>{const y=top+i*(rh+gap);
+    x.fillStyle=k==="sunrise"?"rgba(255,255,255,.08)":"#F7F3E8";x.beginPath();x.roundRect?x.roundRect(90,y,W-180,rh,28):x.rect(90,y,W-180,rh);x.fill();
+    const ink=k==="sunrise"?"#E8F1ED":"#163F36";x.fillStyle=ink;x.textAlign="right";x.font="700 50px "+K;x.fillText(l,W-140,y+rh/2+18);
+    x.textAlign="left";x.direction="ltr";x.font="600 54px "+B;const t=prFmt(p[k]);x.fillText(t,140,y+rh/2+20);const tw=x.measureText(t).width;
+    x.font="500 34px "+B;x.fillStyle=k==="sunrise"?"#CFE5DD":"#6B7F78";x.fillText(prAmPm(p[k]),150+tw,y+rh/2+18);x.direction="rtl"});
+  x.textAlign="center";x.fillStyle="#CFE5DD";x.font="500 30px "+B;x.fillText("دواوين الوفرة 🌿",W/2,H-100);x.direction="ltr";x.font="500 28px "+B;x.fillText(SITE.replace(/^https?:\/\//,""),W/2,H-58);
+  return new Promise(r=>c.toBlob(r,"image/png"))}
+async function sharePrayer(btn){const day=prayerDay(),text=prayerText(day);const old=btn.textContent;btn.disabled=true;btn.textContent="جارٍ التجهيز…";
+  try{if(navigator.canShare){const blob=await prayerImage(day);const file=new File([blob],"مواقيت الصلاة "+day+".png",{type:"image/png"});
+      if(blob&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text});return}}
+    if(navigator.share){await navigator.share({text});return}
+    location.href="https://wa.me/?text="+encodeURIComponent(text)}catch(e){if(!(e&&e.name==="AbortError"))location.href="https://wa.me/?text="+encodeURIComponent(text)}
+  finally{btn.disabled=false;btn.textContent=old}}
 function ageText(d){const n=daysBetween(normDate(d)||todayStr(),todayStr());return n<=0?"أُضيف اليوم":n===1?"أُضيف أمس":"أُضيف قبل "+dayWord(n)}
 function renderDir(key){const D=DIRS[key],out=$("#out-"+key);if(!out)return;out.replaceChildren();const all=state["dir_"+key].filter(x=>dirVisible(key,x));
   const nEl=$("#n-"+key);if(nEl)nEl.textContent=tabOfDir(key)===key?all.length:all.length?"("+all.length+")":"";
