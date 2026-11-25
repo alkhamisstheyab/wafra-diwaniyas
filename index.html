@@ -172,6 +172,7 @@ html,body{overscroll-behavior-y:contain}
 @media (prefers-reduced-motion:reduce){.ptr.spin #ptrIcon{animation:none}}
 .prayer{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;margin:12px 0}
 .prayer h3{margin:0 0 8px;font-family:var(--f-display);font-weight:500;font-size:17px}
+.listshare{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}.listshare .btn{flex:none}
 .prow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}.prow .btn{flex:none}
 .ptimes{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;text-align:center}
 @media (max-width:420px){.ptimes{gap:4px}.ptimes div{font-size:11px;padding:5px 0}.ptimes b{font-size:14px}.prayer h3{font-size:15px}}
@@ -1025,7 +1026,9 @@ function renderDir(key){const D=DIRS[key],out=$("#out-"+key);if(!out)return;out.
   let list=all.filter(x=>(F==="all"||x[D.filterK]===F)&&(!q||normAr(D.fields.map(f=>x[f.k]).join(" ")).includes(q)));
   list=D.newest?list.sort((a,b)=>(normDate(b.posted)||"").localeCompare(normDate(a.posted)||"")):list.sort((a,b)=>D.heading(a).localeCompare(D.heading(b),"ar"));
   if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:all.length?"لا نتائج مطابقة":"لا يوجد شيء مسجّل بعد"}),all.length?"جرّب كلمة أخرى أو اختر «الكل».":"اضغط «"+D.add+"» لإضافة أول "+D.one+"."));return}
-  out.append(...list.map(x=>dirCard(key,x)))}
+  const dT=(F==="all"?D.title:F)+" في مدينة الوفرة السكنية"+(q?" (بحث: "+$("#q-"+key).value.trim()+")":"");
+  out.append(listShareBar(dT,D.emoji||"📋",list.map(x=>{const ph=D.fields.find(f=>f.t==="tel"),mp=D.fields.find(f=>f.k==="map");
+    return["▪️ *"+D.heading(x)+"*",...(D.show||[]).map(([k,l])=>x[k]?"• "+l+": "+clip(x[k]):""),ph&&x[ph.k]?"📞 "+x[ph.k]:"",mp&&x[mp.k]?"🗺️ "+x[mp.k]:""]})),...list.map(x=>dirCard(key,x)))}
 const MOSQUE_SEED=[{"name": "مسجد أبي هريرة", "map": "https://www.google.com/maps/search/?api=1&query=28.608549,48.0146977&query_place_id=ChIJP92l7Btezj8RUB40Vybsf-E", "services": "مواقف واسعة"}, {"name": "مسجد أبو دجانة الأنصاري", "block": "6", "map": "https://www.google.com/maps/search/?api=1&query=28.6002441,48.0279833&query_place_id=ChIJPyGgufxhzj8RAIZQ9zMN0l0", "notes": "تصميم دائري مميز، ومبنى خارجي للوضوء ودورات المياه."}, {"name": "مسجد أحمد سعود الخالد", "map": "https://www.google.com/maps/search/?api=1&query=28.6111162,48.0092786&query_place_id=ChIJ9QK8kQ9ezj8R2IfJ0qNWjJM"}, {"name": "مسجد نورة هادي العجمي", "map": "https://www.google.com/maps/search/?api=1&query=28.6135259,48.0143032&query_place_id=ChIJ2ejy7BBezj8RhglF6wbOfmM", "phone": "94479627"}, {"name": "مسجد التوحيد", "map": "https://www.google.com/maps/search/?api=1&query=28.5954409,48.0084292&query_place_id=ChIJFU3pDgBhzj8Ra6qdFcqRxkk"}, {"name": "مسجد توسعة الوفرة الجديدة (الإمام صالح بن كيسان المدني)", "block": "7", "map": "https://www.google.com/maps/search/?api=1&query=28.5961709,48.0149709&query_place_id=ChIJwW0ZVUthzj8R_AHi1DRA-xc"}, {"name": "مسجد قطعة 7 (قرب فرع الجمعية)", "block": "7", "map": "https://www.google.com/maps/search/?api=1&query=28.5939077,48.0202&query_place_id=ChIJUbVTb71gzj8RCudxFEY_NS0", "phone": "50726222", "notes": "تذكر التقييمات أنه للمرحوم راجس عبيد الدوسري."}, {"name": "مسجد قطعة 5", "block": "5", "map": "https://www.google.com/maps/search/?api=1&query=28.6164433,48.0285556&query_place_id=ChIJpZkfPgBfzj8RcXWxAKA1ju0"}, {"name": "مسجد قطعة 4", "block": "4", "map": "https://www.google.com/maps/search/?api=1&query=28.6030516,48.0096012&query_place_id=ChIJC2Ez5wJezj8RtmY4REznuZM"}, {"name": "مسجد قطعة 4 (شارع 401)", "block": "4", "address": "شارع 401", "map": "https://www.google.com/maps/search/?api=1&query=28.6018902,48.0120131&query_place_id=ChIJ97DfBABfzj8RLwC4tI5Mibo"}, {"name": "مسجد صناعية الوفرة السكنية", "address": "المنطقة الصناعية", "map": "https://www.google.com/maps/search/?api=1&query=28.6031565,48.0392267&query_place_id=ChIJAY5fK8Rhzj8RwMWPE1WWYXQ"}];
 async function importMosques(btn){const have=new Set(state.dir_mosques.map(x=>normAr(x.name||"")));const todo=MOSQUE_SEED.filter(o=>!have.has(normAr(o.name)));
   btn.disabled=true;let n=0;for(const o of todo){btn.textContent="جارٍ الإضافة… "+(n+1)+" من "+todo.length;const row=DIRS.mosques.fields.map(f=>o[f.k]||"");
@@ -1224,6 +1227,11 @@ function svCard(v){return el("article",{class:"dcard",id:"sv-"+svKey(v)},
       safeUrl(v.mapUrl)?el("a",{class:"btn sm",href:v.mapUrl,target:"_blank",rel:"noopener"},"الموقع"):null,
       admin.pin&&v._row?el("button",{class:"btn sm ghost",onclick:()=>openSvForm(v)},"تعديل"):null,
       admin.pin&&v._row?el("button",{class:"btn sm ghost",type:"button",onclick:e=>pickMove(e.currentTarget,"services",v)},"نقل إلى قسم آخر"):null))}
+function listShareBar(title,emoji,blocks){const n=blocks.length;
+  const text=emoji+" *"+title+"*\n"+"العدد: "+n+" · من دليل دواوين الوفرة\n\n"+blocks.map(b=>b.filter(Boolean).join("\n")).join("\n\n")+SIGN;
+  const b=el("button",{type:"button",class:"btn sm"},"📤 مشاركة القائمة ("+n+") بالواتساب");b.addEventListener("click",()=>shareText(text));
+  return el("div",{class:"listshare"},el("span",{class:"hijri",text:title}),b)}
+const clip=(v,n=90)=>{v=String(v||"").replace(/\s+/g," ").trim();return v.length>n?v.slice(0,n-1)+"…":v};
 function renderSv(){const out=$("#svOut");out.replaceChildren();$("#nSv").textContent=state.sv.length;
   const present=allCrafts().filter(c=>state.sv.some(v=>v.crafts.includes(c)));
   if(state.svFilter!=="all"&&!present.includes(state.svFilter))state.svFilter="all";
@@ -1233,7 +1241,8 @@ function renderSv(){const out=$("#svOut");out.replaceChildren();$("#nSv").textCo
   const list=state.sv.filter(v=>(state.svFilter==="all"||v.crafts.includes(state.svFilter))&&(!q||normAr([v.name,v.craft,v.areas,v.notes,v.phone].join(" ")).includes(q)))
     .sort((a,b)=>(a.crafts[0]||"").localeCompare(b.crafts[0]||"","ar")||a.name.localeCompare(b.name,"ar"));
   if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:state.sv.length?"لا نتائج مطابقة":"لا توجد خدمات مسجّلة بعد"}),state.sv.length?"جرّب كلمة أخرى أو اختر «الكل».":"إذا كنت صاحب حرفة أو تعرف رقماً موثوقاً، اضغط «أضف خدمتك»."));return}
-  out.append(...list.map(svCard))}
+  const svT=(state.svFilter==="all"?"أصحاب الحرف والخدمات":state.svFilter)+" في مدينة الوفرة السكنية"+(q?" (بحث: "+$("#sq").value.trim()+")":"");
+  out.append(listShareBar(svT,"🛠️",list.map(v=>["▪️ *"+(v.name||v.crafts.join("، "))+"*",v.name&&state.svFilter==="all"?"🔧 "+v.crafts.join("، "):"",v.phone?"📞 "+v.phone:"",v.areas?"📍 "+clip(v.areas):"",v.mapUrl?"🗺️ "+v.mapUrl:""])),...list.map(svCard))}
 $("#sq").addEventListener("input",renderSv);
 let svEditing=null;
 function buildCraftPick(sel){$("#s-crafts").replaceChildren(...allCrafts().map((c,i)=>el("label",{},Object.assign(el("input",{type:"checkbox",id:"sc-"+i,value:c}),{checked:(sel||[]).includes(c)}),c)))}
