@@ -31,7 +31,9 @@ function normDate(s) {
 const esc = s => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 export async function onRequestGet({ params, request }) {
-  const id = String(params.id || "");
+  // Share ids are short base-36 hashes; anything else is ignored so it never reaches the page.
+  const raw = String(params.id || "").toLowerCase();
+  const id = /^[0-9a-z]{1,13}$/.test(raw) ? raw : "";
   const origin = new URL(request.url).origin;
   const target = origin + "/#dw-" + id;
   let title = "دواوين الوفرة", desc = "دليل دواوين مدينة الوفرة السكنية والأفراح والتعازي", image = origin + "/icon-512.png";
@@ -59,6 +61,6 @@ export async function onRequestGet({ params, request }) {
 <meta http-equiv="refresh" content="0;url=${esc(target)}">
 </head><body style="font-family:system-ui;text-align:center;padding:40px">
 <p><a href="${esc(target)}">فتح تطبيق دواوين الوفرة</a></p>
-<script>location.replace(${JSON.stringify(target)})</script></body></html>`;
+<script>location.replace(${JSON.stringify(target).replace(/</g, "\\u003c")})</script></body></html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
 }
