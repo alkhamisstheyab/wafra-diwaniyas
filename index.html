@@ -153,6 +153,10 @@ dl.facts dd{margin:0;overflow-wrap:anywhere}
 .credit strong{color:var(--ink);font-weight:600}
 .credit img{opacity:.9}
 .footer-link{align-self:center;background:none;border:0;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;padding:8px}
+.tp-h{margin:0 0 8px;font-family:var(--f-display);font-weight:500;font-size:17px}
+.tp-item{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
+.tp-item b{display:block;font-size:16px}.tp-item small{color:var(--muted);font-size:14px}
+.tp-log{display:grid;gap:4px;font-size:14px;color:var(--muted)}.tp-log div{border-bottom:1px dashed var(--line);padding:4px 0}.tp-log b{color:var(--ink);font-weight:600}
 .review{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
 .review label{font-size:13px;color:var(--muted)}
 .review input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;width:100%;min-width:0}
@@ -267,7 +271,7 @@ form{display:flex;flex-direction:column;gap:12px}
     <div class="prayer" id="prayerBox"></div>
     <div class="greet-banner" id="greetBanner" hidden></div>
     <div id="statusNote" class="note" hidden></div>
-    <div class="admin-bar" id="adminBar" hidden>وضع الإدارة: الحفظ مباشر في الجدول <span class="grow"></span><button class="btn sm" type="button" id="readImg">📷 قراءة إعلان من صورة</button><button class="btn sm" type="button" id="greetBtn">📨 رسائل المناسبات</button><button class="btn sm" type="button" id="adminOut">خروج</button>
+    <div class="admin-bar" id="adminBar" hidden>وضع الإدارة: الحفظ مباشر في الجدول <span class="grow"></span><button class="btn sm" type="button" id="readImg">📷 قراءة إعلان من صورة</button><button class="btn sm" type="button" id="greetBtn">📨 رسائل المناسبات</button><button class="btn sm" type="button" id="trashBtn">🗑️ المحذوفات والسجل</button><button class="btn sm" type="button" id="adminOut">خروج</button>
       <input type="file" id="readImgFile" accept="image/*" hidden>
       <div id="adminStats" hidden style="flex-basis:100%;font-weight:500"></div></div>
 
@@ -448,7 +452,7 @@ form{display:flex;flex-direction:column;gap:12px}
         <button class="btn" type="button" data-close>إلغاء</button>
         <span class="grow"></span><button class="btn ghost danger" type="button" id="e-del" hidden>حذف</button>
       </div>
-      <div class="confirm" id="e-delConfirm" hidden>حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="e-delYes">نعم، احذف</button><button class="btn sm" type="button" id="e-delNo">تراجع</button></div>
+      <div class="confirm" id="e-delConfirm" hidden>حذف من الجدول؟ يمكن استرجاعه لاحقاً من «المحذوفات». <button class="btn sm danger" type="button" id="e-delYes">نعم، احذف</button><button class="btn sm" type="button" id="e-delNo">تراجع</button></div>
     </form>
 
     <form id="gForm" hidden>
@@ -459,7 +463,7 @@ form{display:flex;flex-direction:column;gap:12px}
         <button class="btn" type="button" data-close>إلغاء</button>
         <span class="grow"></span><button class="btn ghost danger" type="button" id="g-del" hidden>حذف</button>
       </div>
-      <div class="confirm" id="g-delConfirm" hidden>حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="g-delYes">نعم، احذف</button><button class="btn sm" type="button" id="g-delNo">تراجع</button></div>
+      <div class="confirm" id="g-delConfirm" hidden>حذف من الجدول؟ يمكن استرجاعه لاحقاً من «المحذوفات». <button class="btn sm danger" type="button" id="g-delYes">نعم، احذف</button><button class="btn sm" type="button" id="g-delNo">تراجع</button></div>
     </form>
 
     <form id="svForm" hidden>
@@ -477,7 +481,7 @@ form{display:flex;flex-direction:column;gap:12px}
         <button class="btn" type="button" data-close>إلغاء</button>
         <span class="grow"></span><button class="btn ghost danger" type="button" id="s-del" hidden>حذف</button>
       </div>
-      <div class="confirm" id="s-delConfirm" hidden>حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="s-delYes">نعم، احذف</button><button class="btn sm" type="button" id="s-delNo">تراجع</button></div>
+      <div class="confirm" id="s-delConfirm" hidden>حذف من الجدول؟ يمكن استرجاعه لاحقاً من «المحذوفات». <button class="btn sm danger" type="button" id="s-delYes">نعم، احذف</button><button class="btn sm" type="button" id="s-delNo">تراجع</button></div>
     </form>
 
     <form id="adForm" hidden>
@@ -567,7 +571,7 @@ form{display:flex;flex-direction:column;gap:12px}
       <div class="field" id="rv-vRow" hidden><label for="rv-vfile">فيديو من الجوال (اختياري)</label><input id="rv-vfile" type="file" accept="video/*"></div>
       <div class="field" id="rv-logoRow" hidden><label for="rv-logo">شعار الديوان من الجوال (اختياري)</label><input id="rv-logo" type="file" accept="image/*"></div>
       <div class="formactions" style="margin-top:14px"><button class="btn primary" type="button" id="reviewSave">حفظ مباشرة</button><button class="btn" type="button" data-close>إلغاء</button><span class="grow"></span><button class="btn ghost danger" type="button" id="reviewDel" hidden>حذف</button></div>
-      <div class="confirm" id="delConfirm" hidden style="margin-top:10px">حذف نهائي من الجدول؟ <button class="btn sm danger" type="button" id="delYes">نعم، احذف</button><button class="btn sm" type="button" id="delNo">تراجع</button></div>
+      <div class="confirm" id="delConfirm" hidden style="margin-top:10px">حذف من الجدول؟ يمكن استرجاعه لاحقاً من «المحذوفات». <button class="btn sm danger" type="button" id="delYes">نعم، احذف</button><button class="btn sm" type="button" id="delNo">تراجع</button></div>
     </div>
 
     <div id="greetPanel" hidden>
@@ -575,6 +579,11 @@ form{display:flex;flex-direction:column;gap:12px}
       <div id="greetList" class="list"></div>
     </div>
 
+    <div id="trashPanel" hidden>
+      <p style="margin:0 0 10px;color:var(--muted)">كل ما يُحذف من التطبيق يُحفظ هنا، ويمكن إرجاعه إلى قسمه بضغطة. أسفلها آخر 50 عملية إدارية.</p>
+      <h3 class="tp-h">المحذوفات</h3><div id="trashList" class="list"></div>
+      <h3 class="tp-h" style="margin-top:18px">آخر العمليات</h3><div id="logList" class="tp-log"></div>
+    </div>
     <div id="sendPanel" hidden>
       <p style="margin:0 0 10px;color:var(--muted)">راجع الطلب ثم أرسله إلى صاحب التطبيق عبر واتساب، وسيُضاف بعد التأكد منه. لإضافة صورة للديوان أو المناسبة، أرسلها في نفس محادثة الواتساب بعد الرسالة.</p>
       <pre class="preview" id="sendText"></pre>
@@ -818,7 +827,7 @@ function renderDiw(){const out=$("#diwOut");out.replaceChildren();$("#nDiw").tex
 
 /* ---------- forms ---------- */
 const overlay=$("#overlay");
-function openSheet(title,form){$("#sheetTitle").textContent=title;const P={e:"#eventForm",d:"#diwForm",f:"#adForm",v:"#svForm",g:"#gForm",o:"#greetPanel",s:"#sendPanel",a:"#apologyForm",p:"#pinForm",i:"#pastePanel",r:"#reviewPanel"};
+function openSheet(title,form){$("#sheetTitle").textContent=title;const P={e:"#eventForm",d:"#diwForm",f:"#adForm",v:"#svForm",g:"#gForm",o:"#greetPanel",s:"#sendPanel",a:"#apologyForm",p:"#pinForm",i:"#pastePanel",r:"#reviewPanel",t:"#trashPanel"};
   for(const k in P)$(P[k]).hidden=k!==form;overlay.hidden=false;const f={e:"#e-person",d:"#d-name",f:"#a-title",v:"#s-name",p:"#pin-in",i:"#paste-in"}[form];if(f)setTimeout(()=>$(f).focus(),50)}
 function closeSheet(){overlay.hidden=true}
 overlay.addEventListener("click",e=>{if(e.target===overlay||e.target.hasAttribute("data-close"))closeSheet()});
@@ -890,13 +899,23 @@ async function loadStats(){const box=$("#adminStats");if(!admin.pin){box.hidden=
   try{const j=await api({action:"stats"});if(!Array.isArray(j.days)){const e=new Error("raw");e.detail="رد الجدول: "+JSON.stringify(j).slice(0,120);throw e}const week=j.days.reduce((a,x)=>a+x.n,0);const today=j.days[j.days.length-1].n;
     const short=d=>{try{return new Intl.DateTimeFormat("ar-KW-u-nu-latn",{weekday:"short"}).format(parse(d))}catch(e){return d.slice(5)}};
     box.replaceChildren("👁️ الزيارات: اليوم "+today+" · آخر 7 أيام "+week+" · الإجمالي "+j.views+" · أجهزة مختلفة "+j.devices,
-      el("div",{class:"stat-days"},...j.days.map(x=>el("span",{text:short(x.d)+" "+x.n}))));box.hidden=false}catch(e){box.textContent="👁️ العدّاد لا يعمل بعد ("+((e&&(e.code||e.detail||e.message))||"خطأ")+"). تأكد من تحديث كود الجدول ونشر نسخة جديدة.";box.hidden=false}}
+      el("div",{class:"stat-days"},...j.days.map(x=>el("span",{text:short(x.d)+" "+x.n}))));box.hidden=false}catch(e){if(e&&(e.code==="pin"||e.code==="locked")){adminFail(e);return}box.textContent="👁️ العدّاد لا يعمل بعد ("+((e&&(e.code||e.detail||e.message))||"خطأ")+"). تأكد من تحديث كود الجدول ونشر نسخة جديدة.";box.hidden=false}}
 function adminFail(e){if(e&&e.code==="pin"){try{localStorage.removeItem("wafra-admin-pin")}catch(x){}admin.pin=null;applyAdmin();closeSheet();toast("الرمز السري غير صحيح، ادخل مرة أخرى")}
+  else if(e&&e.code==="ambiguous"){closeSheet();toast("يوجد أكثر من ديوان بهذا الاسم. سجّل الاعتذار من بطاقة الديوان نفسه.")}
   else if(e&&e.code==="locked"){setNote("أُوقف الحفظ مؤقتاً بسبب محاولات رمز خاطئة كثيرة. حاول بعد 15 دقيقة.");toast("الحفظ موقوف مؤقتاً")}
   else if(e&&e.message==="img")toast("تعذّر قراءة الصورة، جرّب صورة أخرى");else if(e&&e.message==="big"){setNote("الفيديو أكبر من 25 ميغابايت. اقطع منه جزءاً أقصر، أو ارفعه على يوتيوب أو إنستغرام وألصق الرابط.");toast("الفيديو كبير")}else if(e&&e.detail){setNote("تعذّر الحفظ. رسالة الجدول: "+e.detail);closeSheet();toast("تعذّر الحفظ، انظر الملاحظة أعلى الصفحة")}
   else if(e&&/Load failed|Failed to fetch|NetworkError/i.test(e.message||"")){setNote("تعذّر الحفظ: لم يصل رد من الجدول. إن كان مع صورة، جرّب صورة أصغر أو أعد نشر الكود.");toast("تعذّر الحفظ")}
   else{setNote("تعذّر الحفظ: "+((e&&(e.code||e.message))||"خطأ غير معروف"));toast("تعذّر الحفظ")}}
 $("#adminIn").addEventListener("click",()=>{if(!apiReady()){toast("وضع الإدارة لم يُفعّل بعد");return}$("#pinForm").reset();$("#pinErr").hidden=true;openSheet("دخول الإدارة","p")});
+async function openTrash(){const tl=$("#trashList"),lg=$("#logList");tl.replaceChildren(el("div",{class:"empty"},el("strong",{text:"جارٍ التحميل…"})));lg.replaceChildren();openSheet("المحذوفات والسجل","t");
+  try{const [t,l]=await Promise.all([api({action:"trash"}),api({action:"log"})]);
+    tl.replaceChildren(...(t.items||[]).length?t.items.map(it=>{const b=el("button",{class:"btn sm primary",type:"button"},"استرجاع");
+      b.addEventListener("click",async()=>{b.disabled=true;b.textContent="جارٍ الاسترجاع…";try{await api({action:"restore",trashRow:it.row,expect:it.time});toast("تم الاسترجاع إلى «"+it.sheet+"»");setTimeout(()=>location.reload(),900)}
+        catch(err){b.disabled=false;b.textContent="استرجاع";if(err.code==="changed"){toast("تغيّرت القائمة، أعد فتحها");openTrash()}else adminFail(err)}});
+      return el("div",{class:"tp-item"},el("div",{},el("b",{text:it.label||"(بدون اسم)"}),el("small",{text:it.sheet+" · حُذف \u2066"+it.time+"\u2069"})),b)}):[el("div",{class:"empty"},el("strong",{text:"لا يوجد شيء محذوف"}))]);
+    lg.replaceChildren(...(l.items||[]).length?l.items.map(x=>el("div",{},el("b",{text:x.action}),"  "+x.sheet+" · "+(x.label||"")+" · \u2066"+x.time+"\u2069")):[el("div",{text:"لا توجد عمليات مسجّلة بعد."})])}
+  catch(err){if(err.code==="bad"){tl.replaceChildren(el("div",{class:"empty"},el("strong",{text:"هذه الميزة تحتاج تحديث كود الجدول."})));return}tl.replaceChildren();closeSheet();adminFail(err)}}
+$("#trashBtn").addEventListener("click",openTrash);
 $("#adminOut").addEventListener("click",()=>{try{localStorage.removeItem("wafra-admin-pin")}catch(e){}admin.pin=null;applyAdmin();toast("تم الخروج من وضع الإدارة")});
 $("#pinForm").addEventListener("submit",async e=>{e.preventDefault();const pin=$("#pin-in").value.trim();if(!pin)return;const btn=$("#pinGo");btn.disabled=true;
   try{admin.pin=pin;await api({action:"check"});try{localStorage.setItem("wafra-admin-pin",pin)}catch(x){}applyAdmin();closeSheet();toast("مرحباً، وضع الإدارة مفعّل")}
@@ -1355,13 +1374,13 @@ function openApology(d){apDiw=d;$("#apologyForm").reset();$("#ap-name").textCont
   $("#ap-cancelRow").hidden=!(d.paused||d.offDates.length);syncAp();openSheet("اعتذار عن الاستقبال","a")}
 function syncAp(){const m=document.querySelector('input[name="ap-mode"]:checked').value;$("#ap-dateRow").hidden=m!=="date";$("#ap-reasonRow").hidden=m==="cancel"}
 document.querySelectorAll('input[name="ap-mode"]').forEach(x=>x.addEventListener("change",syncAp));
-async function saveApology(name,mode,date,reason){const r=await api({action:"apology",name,mode,date,reason});
-  const d=state.diw.find(x=>x.name===name);if(d){Object.assign(d,parseApology(r.value||"",mode==="cancel"?"":reason));if(d.raw){d.raw[9]=r.value||"";d.raw[10]=mode==="cancel"?"":reason}}
+async function saveApology(name,mode,date,reason,rowNum){const r=await api({action:"apology",name,mode,date,reason,rowNum:rowNum||""});
+  const d=state.diw.find(x=>x._row===r.row&&x.name===name)||state.diw.find(x=>x.name===name);if(d){Object.assign(d,parseApology(r.value||"",mode==="cancel"?"":reason));if(d.raw){d.raw[9]=r.value||"";d.raw[10]=mode==="cancel"?"":reason}}
   closeSheet();renderDiw();toast(mode==="cancel"?"تم إلغاء الاعتذار":"تم حفظ الاعتذار")}
 $("#apologyForm").addEventListener("submit",async e=>{e.preventDefault();backTo="a";const m=document.querySelector('input[name="ap-mode"]:checked').value;
   const reason=$("#ap-reason").value.trim();const d=apDiw;const dt=$("#ap-date").value;
   if(m==="date"&&!dt){toast("اختر تاريخ الاعتذار");return}
-  if(admin.pin){const b=$("#apologyForm button[type=submit]");b.disabled=true;try{await saveApology(d.name,m,dt,reason)}catch(err){adminFail(err)}finally{b.disabled=false}return}
+  if(admin.pin){const b=$("#apologyForm button[type=submit]");b.disabled=true;try{await saveApology(d.name,m,dt,reason,d._row)}catch(err){adminFail(err)}finally{b.disabled=false}return}
   if(m==="date")showSend(["طلب اعتذار ديوان – دواوين الوفرة","","اسم الديوان: "+d.name,"اعتذار: "+dt+" ("+fmtLong.format(parse(dt))+")","سبب الاعتذار: "+reason]);
   else if(m==="pause")showSend(["طلب اعتذار ديوان – دواوين الوفرة","","اسم الديوان: "+d.name,"اعتذار: متوقف حتى إشعار آخر","سبب الاعتذار: "+reason]);
   else showSend(["طلب إلغاء اعتذار – دواوين الوفرة","","اسم الديوان: "+d.name,"عاد الديوان للاستقبال، يرجى مسح خانة الاعتذار."])});
@@ -1422,7 +1441,7 @@ $("#reviewSave").addEventListener("click",async()=>{const vals=[...$("#reviewFie
     else if(pending==="ads"){const row=vals.slice(0,10);row[2]=normDate(row[2])||row[2];row[3]=isPerm(row[3])?"دائم":(normDate(row[3])||row[2]);if(!row[2])row[2]=todayStr();row.push(await photoFrom($("#rv-file"),vals[10]),await videoFrom($("#rv-vfile"),vals[11]||""));await saveRow("ads",row)}
     else if(pending==="apology"){const v=vals[1];await saveApology(vals[0],/متوقف/.test(v)?"pause":"date",normDate(v),vals[2])}
     else await saveApology(vals[0],"cancel","","")}
-  catch(err){if(err.code==="notfound")toast("لم أجد ديواناً بهذا الاسم في الجدول");else if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
+  catch(err){if(err.code==="notfound")toast("لم أجد ديواناً بهذا الاسم في الجدول");else if(err.code==="ambiguous")toast("يوجد أكثر من ديوان بهذا الاسم. سجّل الاعتذار من بطاقة الديوان نفسه.");else if(!changedErr(err))adminFail(err)}finally{b.disabled=false}});
 
 /* ---------- tabs ---------- */
 function showTab(t){state.tab=t;["events","diwaniyas","ads","services","restaurants","cafes","pharmacies","mosques","salons","realestate"].forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",String(t===k));$("#view-"+k).hidden=t!==k})}
