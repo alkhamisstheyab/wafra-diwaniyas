@@ -620,7 +620,9 @@ const DAYS=["الأحد","الإثنين","الثلاثاء","الأربعاء",
 const $=s=>document.querySelector(s);
 const state={events:[],diw:[],filter:"all",tab:"events",loaded:{e:false,d:false},kind:"condolence"};
 const pad=n=>String(n).padStart(2,"0");
-const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+/* Kuwait wall-clock time (UTC+3, no daylight saving), whatever the visitor's phone time zone is */
+const kwNow=()=>{const d=new Date();return new Date(d.getTime()+(d.getTimezoneOffset()+180)*60000)};
+const todayStr=()=>{const d=kwNow();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
 const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d,12)};
 const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
 let fmtLong,fmtMonth,fmtHijri;
@@ -648,12 +650,12 @@ function inviteEndMin(ev){const p=ptOf(ev.startDate);const segs=[ev.menTime,ev.w
     if(/الفجر/.test(g))e=p.dhuhr;else if(/الظهر/.test(g))e=p.asr;else if(/بعد صلاة العصر/.test(g))e=p.maghrib;else if(/المغرب/.test(g))e=p.isha;else if(/العشاء/.test(g))e=24*60;
     else if(/صباح/.test(g))e=to?(+to===12?720:+to*60):p.dhuhr;else if(/عصر|مساء/.test(g))e=to?((+to<12?+to+12:+to)*60):p.maghrib;else e=24*60;end=Math.max(end,e)}
   return end||24*60}
-function inviteOver(ev){const t=todayStr();if(ev.startDate<t)return true;if(ev.startDate>t)return false;const n=new Date();return n.getHours()*60+n.getMinutes()>=inviteEndMin(ev)}
+function inviteOver(ev){const t=todayStr();if(ev.startDate<t)return true;if(ev.startDate>t)return false;const n=kwNow();return n.getHours()*60+n.getMinutes()>=inviteEndMin(ev)}
 function status(ev){const t=todayStr();if(ev.kind==="dinner"&&ev.startDate){if(inviteOver(ev))return"past";return ev.startDate===t?"now":"soon"}
   const end=ev.endDate||ev.startDate;if(end<t)return"past";if(ev.startDate<=t)return"now";return"soon"}
 const itypeOf=ev=>ev.itype||"عشاء";
 const inviteWord=t=>/^(ال|ريوق العيد|غداء العيد|عشاء العيد)/.test(t)?t:"ال"+t;
-$("#todayLine").textContent=fmtLong.format(new Date())+(fmtHijri?" · "+fmtHijri.format(new Date()):"");
+$("#todayLine").textContent=fmtLong.format(kwNow())+(fmtHijri?" · "+fmtHijri.format(kwNow()):"");
 
 const PERIODS=[["fajr","بعد صلاة الفجر"],["am","صباحاً"],["dhuhr","بعد صلاة الظهر"],["asr","بعد صلاة العصر"],["pm","عصراً"],["maghrib","بعد صلاة المغرب"],["isha","بعد صلاة العشاء"]];
 const PL=Object.fromEntries(PERIODS);const hasHour=p=>p==="am"||p==="pm";
@@ -685,6 +687,8 @@ const toLatin=s=>String(s||"").replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".inde
 function normDate(s){s=toLatin(s).trim();let m=s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);if(m)return m[1]+"-"+pad(m[2])+"-"+pad(m[3]);
   m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);if(m){let a=+m[1],b=+m[2];const[dd,mm]=a>12?[a,b]:b>12?[b,a]:[a,b];if(mm<1||mm>12||dd<1||dd>31)return"";return m[3]+"-"+pad(mm)+"-"+pad(dd)}return""}
 const normAr=s=>String(s||"").replace(/[إأآ]/g,"ا");
+/* search matching: ignores hamza forms, ta marbuta/ha, alif maqsura/ya, diacritics, tatweel, Arabic digits and case */
+const searchKey=s=>toLatin(String(s||"")).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g,"").replace(/[إأآٱ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي").replace(/ؤ/g,"و").replace(/ئ/g,"ي").replace(/\s+/g," ").trim();
 function parseDays(t){t=normAr(t);if(/يومي|كل الايام|طوال الاسبوع/.test(t))return[0,1,2,3,4,5,6];return DAYS.map((d,i)=>t.includes(normAr(d).replace("ال",""))?i:-1).filter(i=>i>=0)}
 async function loadCsv(url){if(!/^https:\/\//.test(url))throw new Error("config");const r=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now());if(!r.ok)throw new Error("http");const rows=csv(await r.text());return rows.slice(1).map((r,k)=>(r._row=k+2,r)).filter(r=>r.some(Boolean))}
 
@@ -792,7 +796,7 @@ function parseApology(raw,reason){raw=toLatin(raw||"").trim();const out={paused:
   out.offDates=raw.split(/[،,;\s]+/).map(normDate).filter(Boolean).filter(x=>x>=todayStr()).sort();return out}
 const offToday=d=>d.paused||d.offDates.includes(todayStr());
 function weekOff(d){/* weekday indexes cancelled within the next 7 days */const t=todayStr(),lim=addDays(t,6);return d.offDates.filter(x=>x<=lim).map(x=>parse(x).getDay())}
-function diwCard(d){const today=new Date().getDay();
+function diwCard(d){const today=kwNow().getDay();
   const off=weekOff(d);
   const daily=d.days.length===7;
   const days=d.days.length?el("div",{class:"days"},...(daily?[el("span",{class:"day on"+(d.paused||off.includes(today)?" off":""),text:"يومياً"})]
@@ -820,8 +824,8 @@ const pinRank=d=>{const k=normAr(d.name).replace(/^\s*(ال)?ديوان(ية|ي�
 function renderDiw(){const out=$("#diwOut");out.replaceChildren();$("#nDiw").textContent=state.diw.length;
   $("#diwList").replaceChildren(...state.diw.map(d=>el("option",{value:d.name})));
   if(!state.loaded.d){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل الدواوين…"})));return}
-  const q=$("#q").value.trim();const onlyToday=$("#openToday").checked;const today=new Date().getDay();
-  const list=state.diw.filter(d=>(!q||[d.name,d.owner,d.block,d.street].join(" ").includes(q))&&(!onlyToday||(d.days.includes(today)&&!offToday(d)))).sort((a,b)=>pinRank(a)-pinRank(b)||a.name.localeCompare(b.name,"ar"));
+  const q=searchKey($("#q").value);const onlyToday=$("#openToday").checked;const today=kwNow().getDay();
+  const list=state.diw.filter(d=>(!q||searchKey([d.name,d.owner,d.block,d.street,d.phone].join(" ")).includes(q))&&(!onlyToday||(d.days.includes(today)&&!offToday(d)))).sort((a,b)=>pinRank(a)-pinRank(b)||a.name.localeCompare(b.name,"ar"));
   if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:state.diw.length?"لا نتائج مطابقة":"لا توجد دواوين مسجّلة بعد"}),state.diw.length?"جرّب كلمة بحث أخرى أو ألغِ فلتر «المفتوحة اليوم».":"اضغط «أرسل ديوانك» لتسجيل ديوانك وأيام استقباله."));return}
   out.append(...list.map(diwCard))}
 
@@ -994,7 +998,7 @@ function dirCard(key,x){const D=DIRS[key];const facts=el("dl",{class:"facts"});
       el("button",{class:"btn sm",type:"button",onclick:()=>shareText(dirText(key,x),x.photo,D.one+".jpg")},"مشاركة"),
       admin.pin&&x._row?el("button",{class:"btn sm ghost",type:"button",onclick:()=>openDirForm(key,x)},"تعديل"):null,
       admin.pin&&x._row?el("button",{class:"btn sm ghost",type:"button",onclick:e=>pickMove(e.currentTarget,key,x)},"نقل إلى قسم آخر"):null))}
-function renderPrayer(){const box=$("#prayerBox");if(!box)return;const t=todayStr(),p=ptOf(t);const n=new Date(),now=n.getHours()*60+n.getMinutes();
+function renderPrayer(){const box=$("#prayerBox");if(!box)return;const t=todayStr(),p=ptOf(t);const n=kwNow(),now=n.getHours()*60+n.getMinutes();
   const list=[["fajr","الفجر"],["sunrise","الشروق"],["dhuhr","الظهر"],["asr","العصر"],["maghrib","المغرب"],["isha","العشاء"]];
   const next=list.find(([k])=>k!=="sunrise"&&p[k]>now);const fmt=m=>{const h=Math.floor(m/60)%24,mm=m%60;return(h%12||12)+":"+pad(mm)};
   const left=next?p[next[0]]-now:0;const leftTxt=next?(left>=60?Math.floor(left/60)+" س "+(left%60)+" د":left+" دقيقة"):"";
@@ -1004,7 +1008,7 @@ function renderPrayer(){const box=$("#prayerBox");if(!box)return;const t=todaySt
       el("button",{type:"button",class:"btn sm",onclick:e=>sharePrayer(e.currentTarget)},next?"📤 مشاركة مواقيت اليوم":"📤 مشاركة مواقيت الغد")))}
 const PR_LIST=[["fajr","الفجر","🌅"],["sunrise","الشروق","☀️"],["dhuhr","الظهر","🕛"],["asr","العصر","🌤️"],["maghrib","المغرب","🌇"],["isha","العشاء","🌙"]];
 const prFmt=m=>{const h=Math.floor(m/60)%24,mm=m%60;return(h%12||12)+":"+pad(mm)};const prAmPm=m=>Math.floor(m/60)%24<12?"ص":"م";
-function prayerDay(){const n=new Date(),now=n.getHours()*60+n.getMinutes(),t=todayStr();return ptOf(t).isha>now?t:addDays(t,1)}
+function prayerDay(){const n=kwNow(),now=n.getHours()*60+n.getMinutes(),t=todayStr();return ptOf(t).isha>now?t:addDays(t,1)}
 function prayerText(day){const p=ptOf(day),d=parse(day);
   return "🕌 *مواقيت الصلاة في مدينة الوفرة السكنية*\n\n📅 "+DAYS[d.getDay()]+" "+fmtLong.format(d).replace(/^[^،]*،\s*/,"")+" "+d.getFullYear()+"م\n🗓️ "+hijri(day)+"\n\n━━━━━━━━━━\n"+
     PR_LIST.map(([k,l,e])=>e+" *"+l+"* : "+prFmt(p[k])+" "+prAmPm(p[k])).join("\n")+"\n━━━━━━━━━━\n\n﴿حَافِظُوا عَلَى الصَّلَوَاتِ وَالصَّلَاةِ الْوُسْطَىٰ﴾"+SIGN}
@@ -1042,8 +1046,8 @@ function renderDir(key){const D=DIRS[key],out=$("#out-"+key);if(!out)return;out.
   if(key==="mosques"&&admin.pin){const have=new Set(all.map(x=>normAr(x.name||"")));const left=MOSQUE_SEED.filter(o=>!have.has(normAr(o.name))).length;
     if(left){const b=el("button",{type:"button",class:"btn primary"},"🕌 إضافة "+left+" مسجداً من خرائط Google دفعة واحدة");b.addEventListener("click",()=>importMosques(b));
       out.append(el("div",{class:"note",style:"margin-bottom:10px"},"قائمة مساجد الوفرة السكنية جاهزة (الاسم والموقع). اضغط للإضافة، ثم عدّل أي مسجد لإكمال القطعة والإمام. ",b))}}
-  const q=normAr($("#q-"+key).value.trim());const F=state["dirF_"+key];
-  let list=all.filter(x=>(F==="all"||x[D.filterK]===F)&&(!q||normAr(D.fields.map(f=>x[f.k]).join(" ")).includes(q)));
+  const q=searchKey($("#q-"+key).value);const F=state["dirF_"+key];
+  let list=all.filter(x=>(F==="all"||x[D.filterK]===F)&&(!q||searchKey(D.fields.map(f=>x[f.k]).join(" ")).includes(q)));
   list=D.newest?list.sort((a,b)=>(normDate(b.posted)||"").localeCompare(normDate(a.posted)||"")):list.sort((a,b)=>D.heading(a).localeCompare(D.heading(b),"ar"));
   if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:all.length?"لا نتائج مطابقة":"لا يوجد شيء مسجّل بعد"}),all.length?"جرّب كلمة أخرى أو اختر «الكل».":"اضغط «"+D.add+"» لإضافة أول "+D.one+"."));return}
   const dT=(F==="all"?D.title:F)+" في مدينة الوفرة السكنية"+(q?" (بحث: "+$("#q-"+key).value.trim()+")":"");
@@ -1257,8 +1261,8 @@ function renderSv(){const out=$("#svOut");out.replaceChildren();$("#nSv").textCo
   if(state.svFilter!=="all"&&!present.includes(state.svFilter))state.svFilter="all";
   const bar=$("#svCrafts");bar.replaceChildren(...["all",...present].map(c=>{const b=el("button",{type:"button","aria-pressed":String(state.svFilter===c)},c==="all"?"الكل":c);b.addEventListener("click",()=>{state.svFilter=c;renderSv()});return b}));bar.hidden=!present.length;
   if(!state.loaded.v){out.append(el("div",{class:"empty"},el("strong",{text:"جارٍ تحميل الخدمات…"})));return}
-  const q=normAr($("#sq").value.trim());
-  const list=state.sv.filter(v=>(state.svFilter==="all"||v.crafts.includes(state.svFilter))&&(!q||normAr([v.name,v.craft,v.areas,v.notes,v.phone].join(" ")).includes(q)))
+  const q=searchKey($("#sq").value);
+  const list=state.sv.filter(v=>(state.svFilter==="all"||v.crafts.includes(state.svFilter))&&(!q||searchKey([v.name,v.craft,(v.crafts||[]).join(" "),v.areas,v.notes,v.phone].join(" ")).includes(q)))
     .sort((a,b)=>(a.crafts[0]||"").localeCompare(b.crafts[0]||"","ar")||a.name.localeCompare(b.name,"ar"));
   if(!list.length){out.append(el("div",{class:"empty"},el("strong",{text:state.sv.length?"لا نتائج مطابقة":"لا توجد خدمات مسجّلة بعد"}),state.sv.length?"جرّب كلمة أخرى أو اختر «الكل».":"إذا كنت صاحب حرفة أو تعرف رقماً موثوقاً، اضغط «أضف خدمتك»."));return}
   const svT=(state.svFilter==="all"?"أصحاب الحرف والخدمات":state.svFilter)+" في مدينة الوفرة السكنية"+(q?" (بحث: "+$("#sq").value.trim()+")":"");
@@ -1305,9 +1309,16 @@ $("#readImgFile").addEventListener("change",async()=>{const f=$("#readImgFile").
       catch(e){if(!busy(e)||i===3)throw e;toast("خدمة القراءة مزدحمة، أعيد المحاولة ("+(i+2)+" من 4)…");await new Promise(z=>setTimeout(z,4000*(i+1)))}}
     let d=r&&r.data;if(Array.isArray(d))d=d[0];if(d&&d.data&&!d.section)d=d.data;d=d||{};const v=k=>String(d[k]==null?"":d[k]).trim();
     clearInterval(ticker);setNote("");
-    if(!["person","title","name","venue","startDate","phone","details"].some(k=>v(k))){setNote("قُرئت الصورة لكن لم أجد فيها بيانات واضحة. جرّب صورة الإعلان نفسه بدقة أعلى، بدون قص لأطرافه.");return}
+    const fx=(d.fields&&typeof d.fields==="object")?d.fields:{};
+    if(!["person","title","name","venue","startDate","phone","details"].some(k=>v(k))&&!Object.values(fx).some(x=>String(x||"").trim())){setNote("قُرئت الصورة لكن لم أجد فيها بيانات واضحة. جرّب صورة الإعلان نفسه بدقة أعلى، بدون قص لأطرافه.");return}
     const sec=d.section;
-    if(sec==="ads"){location.hash="ads";$("#addAd").click();const set=(id,k)=>{$("#a-"+id).value=v(k)};
+    if(DIRS[sec]){const D=DIRS[sec],pre={};
+      D.fields.forEach(F=>{let x=fx[F.k];if(x==null||x==="")x=F.k==="map"?d.mapUrl:F.k==="address"?(d.area||d.place):d[F.k];if(Array.isArray(x))x=x.join("، ");x=String(x==null?"":x).trim();
+        if(F.opts&&F.t==="select"&&x&&!F.opts.includes(x))x=F.opts.find(o=>searchKey(o).includes(searchKey(x))||searchKey(x).includes(searchKey(o)))||"";if(x)pre[F.k]=x});
+      if(sec==="rentals"&&!pre.status)pre.status="متاح";
+      location.hash=tabOfDir(sec);if(sec==="rentals"||sec==="offices"){const sb=document.querySelector('#reSeg [data-re="'+sec+'"]');if(sb)sb.click()}
+      openDirForm(sec,null,pre);setTimeout(()=>{const g=$("#gfile");if(g)attachFile(g,f)},50)}
+    else if(sec==="ads"){location.hash="ads";$("#addAd").click();const set=(id,k)=>{$("#a-"+id).value=v(k)};
       set("title","title");set("org","org");set("place","place");set("time","time");set("details","details");set("link","link");set("phone","phone");set("map","mapUrl");
       if(d.permanent){$("#a-perm").checked=true}else{$("#a-start").value=normDate(v("startDate"));$("#a-end").value=normDate(v("endDate"))}syncPerm();attachFile($("#a-file"),f)}
     else if(sec==="diwaniyas"){location.hash="diwaniyas";$("#addDiw").click();["name","owner","block","street","phone","notes"].forEach(k=>{$("#d-"+k).value=v(k)});$("#d-map").value=v("mapUrl");
@@ -1354,7 +1365,7 @@ function occStart(o,from){/* first day of the occasion on or after `from`, inclu
   for(let i=-(o.days-1);i<=400;i++){const d=new Date(from);d.setHours(12,0,0,0);d.setDate(d.getDate()+i);
     if(o.greg){if(d.getMonth()+1===o.greg[0]&&d.getDate()===o.greg[1])return d}else{const h=hijriOf(d);if(h&&h.m===o.hijri[0]&&h.d===o.hijri[1])return d}}return null}
 const isoOf=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-function occList(){const now=new Date();return OFFICIAL.map(o=>{const st=occStart(o,now);if(!st)return null;const end=new Date(st);end.setDate(end.getDate()+o.days-1);
+function occList(){const now=kwNow();return OFFICIAL.map(o=>{const st=occStart(o,now);if(!st)return null;const end=new Date(st);end.setDate(end.getDate()+o.days-1);
   return{o,start:isoOf(st),end:isoOf(end),date:st,active:isoOf(st)<=todayStr()&&todayStr()<=isoOf(end)}}).filter(Boolean).sort((a,b)=>a.start.localeCompare(b.start))}
 function renderGreetBanner(){const box=$("#greetBanner");const a=occList().find(x=>x.active);if(!a){box.hidden=true;return}
   box.replaceChildren(el("div",{style:"flex:1 1 200px;min-width:0"},el("b",{text:a.o.emoji+" "+a.o.banner}),el("div",{},el("span",{text:"بمناسبة "+a.o.name}))),
@@ -1464,7 +1475,7 @@ state.ads=[];state.sv=[];state.loaded.a=state.loaded.v=false;applyAdmin();render
   window.addEventListener("touchmove",e=>{if(y0==null)return;dy=e.touches[0].clientY-y0;if(dy<=0||window.scrollY>0){show(0);return}
     show(dy*.6);const ready=dy*.6>=LIM;icon.textContent=ready?"↻":"↓";txt.textContent=ready?"أفلت للتحديث":"اسحب للتحديث"},{passive:true});
   window.addEventListener("touchend",()=>{if(y0==null)return;y0=null;if(dy*.6>=LIM){busy=true;ptr.classList.add("spin");icon.textContent="↻";txt.textContent="جارٍ التحديث…";show(LIM);setTimeout(()=>location.reload(),150)}else show(0)});})();
-renderGreetBanner();try{$("#yr").textContent=String(Math.max(2026,new Date().getFullYear()))}catch(e){}
+renderGreetBanner();try{$("#yr").textContent=String(Math.max(2026,kwNow().getFullYear()))}catch(e){}
 async function loadLive(){if(!apiReady())throw new Error("no api");const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),20000);
   try{let q="?t="+Date.now();if(!admin.pin){q+="&hit=1";try{if(!localStorage.getItem("wafra-seen")){q+="&nv=1";localStorage.setItem("wafra-seen","1")}}catch(x){}}
     const r=await fetch(CONFIG.adminApi+q,{signal:ctl.signal});const txt=await r.text();let j;try{j=JSON.parse(txt)}catch(x){const m=txt.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();throw new Error((m.match(/(SyntaxError|ReferenceError|TypeError|Exception|Error)[^.]{0,160}/)||[m.slice(0,160)])[0])}if(!j.ok)throw new Error("bad");
