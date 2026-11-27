@@ -1,24 +1,11 @@
 // Share page for one diwaniya: gives WhatsApp a preview (title + invitation photo), then opens the app on that card
-const DIW_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWuKKehvUtt7zHVDSKvTqg3i39ohH98Eeis27ei0RWKYKmkA5ek7EVhnugMUo7qX7AaGrM8n0xqjnG/pub?gid=1818035409&single=true&output=csv";
+import { getPublic } from "../_lib/gas.js";
 
 function evKey(start, person) {
   const t = String(start || "") + "|" + String(person || "").trim();
   let h = 2166136261;
   for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
   return h.toString(36);
-}
-function csv(text) {
-  const rows = []; let row = [], f = "", q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
-    else if (c === '"') q = true;
-    else if (c === ",") { row.push(f); f = ""; }
-    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
-    else f += c;
-  }
-  if (f !== "" || row.length) { row.push(f); rows.push(row); }
-  return rows.map(r => r.map(x => x.trim()));
 }
 const pad = n => String(n).padStart(2, "0");
 const toLatin = s => String(s || "").replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
@@ -30,7 +17,7 @@ function normDate(s) {
 }
 const esc = s => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-export async function onRequestGet({ params, request }) {
+export async function onRequestGet({ params, request, env, waitUntil }) {
   // Share ids are short base-36 hashes; anything else is ignored so it never reaches the page.
   const raw = String(params.id || "").toLowerCase();
   const id = /^[0-9a-z]{1,13}$/.test(raw) ? raw : "";
@@ -38,8 +25,7 @@ export async function onRequestGet({ params, request }) {
   const target = origin + "/#dw-" + id;
   let title = "دواوين الوفرة", desc = "دليل دواوين مدينة الوفرة السكنية والأفراح والتعازي", image = origin + "/icon-512.png";
   try {
-    const r = await fetch(DIW_CSV, { cf: { cacheTtl: 60 } });
-    const rows = csv(await r.text()).slice(1);
+    const rows = ((await getPublic(env, { waitUntil })).diwaniyas || []).map(r => r.v || []);
     for (const x of rows) {
       if (!x[0] || evKey("dw", x[0]) !== id) continue;
       title = "حياكم ب" + x[0];
@@ -60,7 +46,6 @@ export async function onRequestGet({ params, request }) {
 <meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="refresh" content="0;url=${esc(target)}">
 </head><body style="font-family:system-ui;text-align:center;padding:40px">
-<p><a href="${esc(target)}">فتح تطبيق دواوين الوفرة</a></p>
-<script>location.replace(${JSON.stringify(target).replace(/</g, "\\u003c")})</script></body></html>`;
+<p><a href="${esc(target)}">فتح تطبيق دواوين الوفرة</a></p></body></html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
 }

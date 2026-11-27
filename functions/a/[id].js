@@ -1,5 +1,5 @@
 // Share page for one announcement: WhatsApp preview (title + photo), then opens the app on that card
-const API = "https://script.google.com/macros/s/AKfycbxyYlMtkaeH9nIYVBmY85q22ttehdciW_oj1TiE7sAyaEHab9jO3OKm0SL8KxNlP3U/exec";
+import { getPublic } from "../_lib/gas.js";
 
 function evKey(start, person) {
   const t = String(start || "") + "|" + String(person || "").trim();
@@ -18,7 +18,7 @@ function normDate(s) {
 }
 const esc = s => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-export async function onRequestGet({ params, request }) {
+export async function onRequestGet({ params, request, env, waitUntil }) {
   // Share ids are short base-36 hashes; anything else is ignored so it never reaches the page.
   const raw = String(params.id || "").toLowerCase();
   const id = /^[0-9a-z]{1,13}$/.test(raw) ? raw : "";
@@ -26,8 +26,7 @@ export async function onRequestGet({ params, request }) {
   const target = origin + "/#ad-" + id;
   let title = "إعلانات الوفرة", desc = "مهرجانات وفعاليات وعروض تهم أهالي مدينة الوفرة السكنية", image = origin + "/icon-512.png";
   try {
-    const r = await fetch(API, { redirect: "follow" });
-    const j = await r.json();
+    const j = await getPublic(env, { waitUntil });
     for (const x of (j.ads || [])) {
       const v = x.v || [];
       const start = normDate(v[2]);
@@ -50,7 +49,6 @@ export async function onRequestGet({ params, request }) {
 <meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="refresh" content="0;url=${esc(target)}">
 </head><body style="font-family:system-ui;text-align:center;padding:40px">
-<p><a href="${esc(target)}">فتح تطبيق دواوين الوفرة</a></p>
-<script>location.replace(${JSON.stringify(target).replace(/</g, "\\u003c")})</script></body></html>`;
+<p><a href="${esc(target)}">فتح تطبيق دواوين الوفرة</a></p></body></html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
 }
